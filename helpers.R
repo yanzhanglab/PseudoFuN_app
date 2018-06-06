@@ -175,8 +175,8 @@ search2GOtbl <- function(gene,go,dataset,annot){
   message(gene_set)
   genes_all <- ifelse(annot[,'ensembl_gene_id'] %in% gene_set,1,0)
   names(genes_all) <- annot[,'ensembl_gene_id'];
-  idx = c(which(genes_all==1),sample(which(genes_all==0), 20000, replace = FALSE))
-  genes_all = genes_all[idx]
+  #idx = c(which(genes_all==1),sample(which(genes_all==0), 00, replace = FALSE))
+  #genes_all = genes_all[idx]
   GOdata <- new("topGOdata",ontology = "BP",
                 allGenes = genes_all,
                 geneSel=function(p) p == 1,
