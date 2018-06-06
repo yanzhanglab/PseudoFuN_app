@@ -39,7 +39,7 @@ get_annot <- function(){
   return(annot)
 }
 
-map_gene <- function(gene){
+map_gene <- function(gene, annot){
   message('Mapping genes back to gencode annotation')
   # Formatting Ensembl gene name
   if(substr(gene,1,4) == 'ENSG'){
@@ -75,7 +75,7 @@ map_gene <- function(gene){
     }
   # Formatting entrez gene ID
   }else if (numbers_only(gene)){
-    annot <- get_annot();
+    #annot <- get_annot();
     tmp = annot[which(annot[,"entrezgene"]==gene),"ensembl_gene_id"];
     if (length(tmp) == 0){
       return(NA)
@@ -84,7 +84,7 @@ map_gene <- function(gene){
     }
   # Formatting Hugo gene symbols
   }else{
-    annot <- get_annot();
+    #annot <- get_annot();
     tmp = annot[which(annot[,"hgnc_symbol"]==gene),"ensembl_gene_id"];
     if (length(tmp) == 0){
       return(NA)
@@ -139,9 +139,8 @@ int_graph <- function(pgAmat){
   plot.igraph(mstg,vertex.label=V(mstg)$name,layout=layout.fruchterman.reingold, edge.color="black",edge.width=E(mstg)$weight)
 }
 
-search2plotgen <- function(gene,DB){
-  dataset = load_dataset(DB);
-  genes <- map_gene(gene);
+search2plotgen <- function(gene,dataset,annot){
+  genes <- map_gene(gene,annot);
   pgAmats <- find_pgAmat(genes,dataset);
   for(pgAmat in pgAmats){
     int_graph(as.matrix(dataset[[pgAmats]]))

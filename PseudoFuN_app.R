@@ -25,9 +25,7 @@ ui <- fluidPage(
       
       textInput("gene", h3("Enter a gene"), 
                 value = "Enter Gene")
-      
     ),
-    
     # Main panel for displaying outputs ----
     mainPanel(
       
@@ -42,7 +40,12 @@ ui <- fluidPage(
 
 # Define server logic required to draw a histogram ----
 server <- function(input, output) {
-  
+  annot <- reactive({
+    get_annot()
+  })
+  dataset <- reactive({
+    load_dataset(input$db)
+  })
   output$selected_db <- renderText({
     paste("Database: ", input$db)
   })
@@ -52,7 +55,7 @@ server <- function(input, output) {
   })
   
   output$network <- renderPlot({
-    search2plotgen(input$gene,input$db)
+    search2plotgen(input$gene,dataset(),annot())
   })
   
 }
