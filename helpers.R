@@ -1,5 +1,23 @@
+if(FALSE){
+  #source("https://bioconductor.org/biocLite.R")
+  #biocLite("clusterProfiler")
+  #source("https://bioconductor.org/biocLite.R")
+  #biocLite("DOSE")
+  #source("https://bioconductor.org/biocLite.R")
+  #biocLite("RDAVIDWebService")
+  source("https://bioconductor.org/biocLite.R")
+  biocLite("topGO")
+  source("https://bioconductor.org/biocLite.R")
+  biocLite("org.Hs.eg.db")
+}
+
+
 library('biomaRt')
 library('igraph')
+library('topGO')
+#library('RDAVIDWebService')
+#library('DOSE')
+#library('clusterProfiler')
 
 letters_only <- function(x) !grepl("[^A-Za-z]", x)
 
@@ -147,7 +165,34 @@ search2plotgen <- function(gene,dataset,annot){
   }
 }
 
-
+search2GOtbl <- function(gene,go,dataset,annot){
+  if(go == "Run GO Analysis"){
+  message('Generating GO table')
+  library('org.Hs.eg.db')
+  genes <- map_gene(gene,annot);
+  pgAmats <- find_pgAmat(genes,dataset);
+  gene_set <- names(dataset[[pgAmats]])
+  message(gene_set)
+  genes_all <- ifelse(annot[,'ensembl_gene_id'] %in% gene_set,1,0)
+  names(genes_all) <- annot[,'ensembl_gene_id'];
+  idx = c(which(genes_all==1),sample(which(genes_all==0), 20000, replace = FALSE))
+  genes_all = genes_all[idx]
+  GOdata <- new("topGOdata",ontology = "BP",
+                allGenes = genes_all,
+                geneSel=function(p) p == 1,
+                description ="inNetwork",
+                annot=annFUN.org, mapping="org.Hs.eg.db", ID="Ensembl")
+  resultFisher <- runTest(GOdata, algorithm = "classic", statistic = "fisher")
+  resultKS <- runTest(GOdata, algorithm = "classic", statistic = "ks")
+  resultKS.elim <- runTest(GOdata, algorithm = "elim", statistic = "ks")
+  allRes <- GenTable(GOdata, classicFisher = resultFisher,
+                     classicKS = resultKS, elimKS = resultKS.elim,
+                     orderBy = "elimKS", ranksOf = "classicFisher", topNodes = 10)
+  return(allRes)
+  }else{
+    return("No GO Analysis")
+  }
+}
 
 
 

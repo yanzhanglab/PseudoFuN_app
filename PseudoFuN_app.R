@@ -24,7 +24,13 @@ ui <- fluidPage(
                   selected = "CUDAlign54"),
       
       textInput("gene", h3("Enter a gene"), 
-                value = "Enter Gene")
+                value = "ENSG00000172236"),
+      
+      selectInput("go",
+                  label = "GO Analysis",
+                  choices = c("Run GO Analysis",
+                              "Do not run GO Analysis"),
+                  selected = "Do not run GO Analysis")
     ),
     # Main panel for displaying outputs ----
     mainPanel(
@@ -32,20 +38,24 @@ ui <- fluidPage(
       # Output: Histogram ----
       textOutput(outputId = "selected_db"),
       textOutput(outputId = "selected_gene"),
-      plotOutput(outputId = 'network')
-      
+      textOutput(outputId = "runningGO"),
+      plotOutput(outputId = 'network'),
+      tableOutput(outputId = 'GOtable')
     )
   )
 )
 
 # Define server logic required to draw a histogram ----
 server <- function(input, output) {
+  
   annot <- reactive({
     get_annot()
   })
+  
   dataset <- reactive({
     load_dataset(input$db)
   })
+
   output$selected_db <- renderText({
     paste("Database: ", input$db)
   })
@@ -54,10 +64,19 @@ server <- function(input, output) {
     paste("Gene: ", input$gene)
   })
   
+  output$runningGO <- renderText({
+    paste(input$go)
+  })
+  
   output$network <- renderPlot({
     search2plotgen(input$gene,dataset(),annot())
   })
   
+  GOanalysis <- reactive({
+    search2GOtbl(input$gene,input$go,dataset(),annot())
+  })
+  
+  output$GOtable <- renderTable(GOanalysis())
 }
 
 # Create Shiny app ----
