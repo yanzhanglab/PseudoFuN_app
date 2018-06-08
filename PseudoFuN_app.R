@@ -30,7 +30,10 @@ ui <- fluidPage(
                   label = "GO Analysis",
                   choices = c("Run GO Analysis",
                               "Do not run GO Analysis"),
-                  selected = "Do not run GO Analysis")
+                  selected = "Do not run GO Analysis"),
+      
+      checkboxInput("inc0", "Include 0 Significant Genes in GO Analysis", value = FALSE)
+    
     ),
     # Main panel for displaying outputs ----
     mainPanel(
@@ -73,7 +76,7 @@ server <- function(input, output) {
   })
   
   GOanalysis <- reactive({
-    search2GOtbl(input$gene,input$go,dataset(),annot())
+    search2GOtbl(input$gene,input$go,dataset(),annot(),input$inc0)
   })
   
   output$GOtable <- renderTable(GOanalysis())

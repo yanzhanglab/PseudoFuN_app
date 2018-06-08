@@ -165,30 +165,36 @@ search2plotgen <- function(gene,dataset,annot){
   }
 }
 
-search2GOtbl <- function(gene,go,dataset,annot){
+search2GOtbl <- function(gene,go,dataset,annot,inc0){
   if(go == "Run GO Analysis"){
-  message('Generating GO table')
-  library('org.Hs.eg.db')
-  genes <- map_gene(gene,annot);
-  pgAmats <- find_pgAmat(genes,dataset);
-  gene_set <- names(dataset[[pgAmats]])
-  message(gene_set)
-  genes_all <- ifelse(annot[,'ensembl_gene_id'] %in% gene_set,1,0)
-  names(genes_all) <- annot[,'ensembl_gene_id'];
-  #idx = c(which(genes_all==1),sample(which(genes_all==0), 00, replace = FALSE))
-  #genes_all = genes_all[idx]
-  GOdata <- new("topGOdata",ontology = "BP",
+    library('org.Hs.eg.db')
+    message('Generating GO table')
+    genes <- map_gene(gene,annot);
+    pgAmats <- find_pgAmat(genes,dataset);
+    gene_set <- names(dataset[[pgAmats]])
+    genes_all <- factor(as.integer(annot[,'ensembl_gene_id'] %in% gene_set))
+    names(genes_all) <- annot[,'ensembl_gene_id'];
+    #genes_all = genes_all[!is.na(names(genes_all))]
+    #geneID2GO <- readMappings(file = system.file("examples/geneid2go.map", package = "topGO"))
+    #idx = c(which(genes_all==1),sample(which(genes_all==0), 10000, replace = FALSE))
+    #genes_all = genes_all[idx]
+    GOdata <- new("topGOdata",ontology = "BP",
                 allGenes = genes_all,
                 geneSel=function(p) p == 1,
                 description ="inNetwork",
                 annot=annFUN.org, mapping="org.Hs.eg.db", ID="Ensembl")
-  resultFisher <- runTest(GOdata, algorithm = "classic", statistic = "fisher")
-  resultKS <- runTest(GOdata, algorithm = "classic", statistic = "ks")
-  resultKS.elim <- runTest(GOdata, algorithm = "elim", statistic = "ks")
-  allRes <- GenTable(GOdata, classicFisher = resultFisher,
+
+    resultFisher <- runTest(GOdata, algorithm = "classic", statistic = "fisher")
+    resultKS <- runTest(GOdata, algorithm = "classic", statistic = "ks")
+    resultKS.elim <- runTest(GOdata, algorithm = "elim", statistic = "ks")
+    allRes <- GenTable(GOdata, classicFisher = resultFisher,
                      classicKS = resultKS, elimKS = resultKS.elim,
-                     orderBy = "elimKS", ranksOf = "classicFisher", topNodes = 10)
-  return(allRes)
+                     orderBy = "elimKS", ranksOf = "classicFisher", topNodes = 10000)
+    if(inc0){
+      return(allRes)
+    }else{
+        return(allRes[allRes[,'Significant']>0,])
+    }
   }else{
     return("No GO Analysis")
   }
