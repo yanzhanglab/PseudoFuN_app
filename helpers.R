@@ -14,6 +14,7 @@ if(FALSE){
 
 library('biomaRt')
 library('igraph')
+library('networkD3')
 library('topGO')
 #library('RDAVIDWebService')
 #library('DOSE')
@@ -154,14 +155,21 @@ int_graph <- function(pgAmat){
   mstg = mst(g,weights=E(g)$weight);
   E(g)$weight = max(E(g)$weight)+E(g)$weight;
   E(mstg)$weight = max(E(mstg)$weight)+E(mstg)$weight
-  plot.igraph(mstg,vertex.label=V(mstg)$name,layout=layout.fruchterman.reingold, edge.color="black",edge.width=E(mstg)$weight)
+  wc <- cluster_walktrap(mstg)
+  members <- membership(wc)
+  nd3g = igraph_to_networkD3(mstg,group=members)
+  return(nd3g)
+  #forceNetwork(Links = nd3g$links, Nodes=nd3g$nodes,
+  #             Source = 'source', Target = 'target', NodeID = 'name',
+  #             Group = 'group')
+  #plot.igraph(mstg,vertex.label=V(mstg)$name,layout=layout.fruchterman.reingold, edge.color="black",edge.width=E(mstg)$weight)
 }
 
-search2plotgen <- function(gene,dataset,annot){
+search2network <- function(gene,dataset,annot){
   genes <- map_gene(gene,annot);
   pgAmats <- find_pgAmat(genes,dataset);
   for(pgAmat in pgAmats){
-    int_graph(as.matrix(dataset[[pgAmats]]))
+    return(int_graph(as.matrix(dataset[[pgAmats]])))
   }
 }
 

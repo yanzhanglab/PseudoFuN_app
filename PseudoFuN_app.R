@@ -1,4 +1,5 @@
 library('shiny')
+library('networkD3')
 source('helpers.R')
 
 # Define UI for app that draws a histogram ----
@@ -39,10 +40,13 @@ ui <- fluidPage(
     mainPanel(
       
       # Output: Histogram ----
-      textOutput(outputId = "selected_db"),
-      textOutput(outputId = "selected_gene"),
-      textOutput(outputId = "runningGO"),
-      plotOutput(outputId = 'network'),
+      #textOutput(outputId = "selected_db"),
+      #textOutput(outputId = "selected_gene"),
+      #textOutput(outputId = "runningGO"),
+      tabsetPanel(
+        tabPanel("Force Network", forceNetworkOutput("network"))
+      ),
+      #forceNetworkOutput(outputId = 'network'),
       tableOutput(outputId = 'GOtable')
     )
   )
@@ -71,8 +75,12 @@ server <- function(input, output) {
     paste(input$go)
   })
   
-  output$network <- renderPlot({
-    search2plotgen(input$gene,dataset(),annot())
+  output$network <- renderForceNetwork({
+    #search2plotgen(input$gene,dataset(),annot())
+    g = search2network(input$gene,dataset(),annot());
+    forceNetwork(Links = g$links, Nodes=g$nodes,
+                 Source = 'source', Target = 'target', NodeID = 'name',
+                 Group = 'group')
   })
   
   GOanalysis <- reactive({
