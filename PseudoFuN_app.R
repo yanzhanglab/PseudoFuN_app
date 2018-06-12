@@ -22,10 +22,10 @@ ui <- fluidPage(
                               "CUDAlign54", 
                               "CUDAlign135",
                               "CUDAlign198"),
-                  selected = "CUDAlign54"),
+                  selected = "BlastDB"),
       
       textInput("gene", h3("Enter a gene"), 
-                value = "ENSG00000172236"),
+                value = "PTEN"),
       
       selectInput("go",
                   label = "GO Analysis",
@@ -44,7 +44,10 @@ ui <- fluidPage(
       #textOutput(outputId = "selected_gene"),
       #textOutput(outputId = "runningGO"),
       tabsetPanel(
-        tabPanel("Force Network", forceNetworkOutput("network"))
+        tabPanel("Network 1", forceNetworkOutput("net1")),
+        tabPanel("Network 2", forceNetworkOutput("net2")),
+        tabPanel("Network 3", forceNetworkOutput("net3")),
+        tabPanel("Network 4", forceNetworkOutput("net4"))
       ),
       #forceNetworkOutput(outputId = 'network'),
       tableOutput(outputId = 'GOtable')
@@ -75,9 +78,31 @@ server <- function(input, output) {
     paste(input$go)
   })
   
-  output$network <- renderForceNetwork({
-    #search2plotgen(input$gene,dataset(),annot())
-    g = search2network(input$gene,dataset(),annot());
+  # Add for dynamic number of plots
+
+  output$net1 <- renderForceNetwork({
+    g <- search2network(input$gene,dataset(),annot(),1);
+    forceNetwork(Links = g$links, Nodes=g$nodes,
+                 Source = 'source', Target = 'target', NodeID = 'name',
+                 Group = 'group')
+  })
+  
+  output$net2 <- renderForceNetwork({
+    g <- search2network(input$gene,dataset(),annot(),2);
+    forceNetwork(Links = g$links, Nodes=g$nodes,
+                 Source = 'source', Target = 'target', NodeID = 'name',
+                 Group = 'group')
+  })
+  
+  output$net3 <- renderForceNetwork({
+    g <- search2network(input$gene,dataset(),annot(),3);
+    forceNetwork(Links = g$links, Nodes=g$nodes,
+                 Source = 'source', Target = 'target', NodeID = 'name',
+                 Group = 'group')
+  })
+  
+  output$net4 <- renderForceNetwork({
+    g <- search2network(input$gene,dataset(),annot(),4);
     forceNetwork(Links = g$links, Nodes=g$nodes,
                  Source = 'source', Target = 'target', NodeID = 'name',
                  Group = 'group')

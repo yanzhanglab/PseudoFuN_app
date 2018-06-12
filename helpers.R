@@ -62,7 +62,7 @@ map_gene <- function(gene, annot){
   message('Mapping genes back to gencode annotation')
   # Formatting Ensembl gene name
   if(substr(gene,1,4) == 'ENSG'){
-    tmp = substr(gene,1,regexpr("\\.",gene))
+    tmp = substr(gene,1,regexpr("\\.",gene)-1)
     if (tmp!=""){
       if (nchar(tmp) == 15){
         return(tmp);
@@ -78,7 +78,7 @@ map_gene <- function(gene, annot){
     }
   # Formatting Ensembl transcript name
   }else if(substr(gene,1,4) == 'ENST'){
-    tmp = substr(gene,1,regexpr("\\.",gene));
+    tmp = substr(gene,1,regexpr("\\.",gene)-1);
     if (tmp!=""){
       if (nchar(tmp) == 15){
         return(tmp);
@@ -121,7 +121,7 @@ in_pgAmat <- function(pgAmat,gene){
       return(FALSE)
     }
   }else if(substr(gene,1,4) == 'ENST'){
-    if(length(grep(gene,names(dataset[['pgAmat16.csv']])))>0){
+    if(length(grep(gene,names(pgAmat)))>0){
       return(TRUE)
     }else{
       return(FALSE)
@@ -132,19 +132,17 @@ in_pgAmat <- function(pgAmat,gene){
   }
 }
 
-find_pgAmat <- function(genes,dataset){
+find_pgAmats <- function(genes,dataset){
   message('Finding pgAmat containing gene')
-  tmp = c()
-  if(is.na(genes)){
-    return(NA)
-  }else if(genes == ""){
+  tmp = list()
+  if(all(is.na(genes)==TRUE)){
     return(NA)
   }else{
     for(gene in genes){
-      tmp[gene] = names(dataset)[which(unlist(lapply(dataset,in_pgAmat, gene=gene)))]
+      tmp[[gene]] = names(dataset)[which(unlist(lapply(dataset,in_pgAmat, gene=gene)))]
     }
   }
-  tmp = tmp[which(tmp!="")];
+  tmp = unlist(tmp)
   return(tmp)
 }
 
@@ -159,17 +157,20 @@ int_graph <- function(pgAmat){
   members <- membership(wc)
   nd3g = igraph_to_networkD3(mstg,group=members)
   return(nd3g)
+  # plotted D3 graph now returns D3 graph
   #forceNetwork(Links = nd3g$links, Nodes=nd3g$nodes,
   #             Source = 'source', Target = 'target', NodeID = 'name',
   #             Group = 'group')
   #plot.igraph(mstg,vertex.label=V(mstg)$name,layout=layout.fruchterman.reingold, edge.color="black",edge.width=E(mstg)$weight)
 }
 
-search2network <- function(gene,dataset,annot){
+search2network <- function(gene,dataset,annot,idx){
   genes <- map_gene(gene,annot);
-  pgAmats <- find_pgAmat(genes,dataset);
-  for(pgAmat in pgAmats){
-    return(int_graph(as.matrix(dataset[[pgAmats]])))
+  pgAmats <- find_pgAmats(genes,dataset);
+  if(idx<=length(pgAmats)){
+    return(int_graph(as.matrix(dataset[[pgAmats[idx]]])))
+  }else{
+    return(NA) 
   }
 }
 
@@ -179,6 +180,10 @@ search2GOtbl <- function(gene,go,dataset,annot,inc0){
     message('Generating GO table')
     genes <- map_gene(gene,annot);
     pgAmats <- find_pgAmat(genes,dataset);
+    gene_set = c()
+    for(pgAmat in pgAmats){
+      gene_set <- rbind(names(dataset[[pgAmat]]))
+    }
     gene_set <- names(dataset[[pgAmats]])
     genes_all <- factor(as.integer(annot[,'ensembl_gene_id'] %in% gene_set))
     names(genes_all) <- annot[,'ensembl_gene_id'];
