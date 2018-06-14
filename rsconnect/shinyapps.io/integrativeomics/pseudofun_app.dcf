@@ -1,0 +1,10 @@
+name: pseudofun_app
+title:
+username:
+account: integrativeomics
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 359710
+bundleId: 1425225
+url: https://integrativeomics.shinyapps.io/pseudofun_app/
+when: 1528815794.91313

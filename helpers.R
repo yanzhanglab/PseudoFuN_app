@@ -1,24 +1,30 @@
-if(FALSE){
-  #source("https://bioconductor.org/biocLite.R")
-  #biocLite("clusterProfiler")
-  #source("https://bioconductor.org/biocLite.R")
-  #biocLite("DOSE")
-  #source("https://bioconductor.org/biocLite.R")
-  #biocLite("RDAVIDWebService")
+if(!require(topGO)){
   source("https://bioconductor.org/biocLite.R")
   biocLite("topGO")
+}
+if(!require(org.Hs.eg.db)){
   source("https://bioconductor.org/biocLite.R")
   biocLite("org.Hs.eg.db")
 }
-
+if(!require(BiocGenerics)){
+  source("https://bioconductor.org/biocLite.R")
+  biocLite("BiocGenerics")
+}
+if(!require(biomaRt)){
+  install.packages('biomaRt')
+}
+if(!require(igraph)){
+  install.packages('igraph')
+}
+if(!require(networkD3)){
+  install.packages('networkD3')
+}
 
 library('biomaRt')
 library('igraph')
 library('networkD3')
 library('topGO')
-#library('RDAVIDWebService')
-#library('DOSE')
-#library('clusterProfiler')
+
 
 letters_only <- function(x) !grepl("[^A-Za-z]", x)
 
@@ -53,12 +59,12 @@ get_annot <- function(){
   ensembl74 <- useMart(host='dec2016.archive.ensembl.org', 
                        biomart='ENSEMBL_MART_ENSEMBL', 
                        dataset='hsapiens_gene_ensembl')
-  annot <- getBM(attributes=c('ensembl_gene_id', 'entrezgene', 'hgnc_symbol', 'start_position', 'end_position', 'band'),
+  annot <- getBM(attributes=c('ensembl_transcript_id', 'ensembl_gene_id', 'entrezgene', 'hgnc_symbol', 'start_position', 'end_position', 'band'),
                  mart=ensembl74)
   return(annot)
 }
 
-map_gene <- function(gene, annot){
+map_genes <- function(gene,isgene,annot){
   message('Mapping genes back to gencode annotation')
   # Formatting Ensembl gene name
   if(substr(gene,1,4) == 'ENSG'){
@@ -94,21 +100,37 @@ map_gene <- function(gene, annot){
     }
   # Formatting entrez gene ID
   }else if (numbers_only(gene)){
-    #annot <- get_annot();
-    tmp = annot[which(annot[,"entrezgene"]==gene),"ensembl_gene_id"];
-    if (length(tmp) == 0){
-      return(NA)
+    if(isgene){
+      tmp = annot[which(annot[,"entrezgene"]==gene),"ensembl_gene_id"];
+      if (length(tmp) == 0){
+        return(NA)
+      }else{
+        return(tmp)
+      }
     }else{
-      return(tmp)
+      tmp = annot[which(annot[,"entrezgene"]==gene),"ensembl_transcript_id"];
+      if (length(tmp) == 0){
+        return(NA)
+      }else{
+        return(tmp)
+      }
     }
   # Formatting Hugo gene symbols
   }else{
-    #annot <- get_annot();
-    tmp = annot[which(annot[,"hgnc_symbol"]==gene),"ensembl_gene_id"];
-    if (length(tmp) == 0){
-      return(NA)
+    if(isgene){
+      tmp = annot[which(annot[,"hgnc_symbol"]==gene),"ensembl_gene_id"];
+      if (length(tmp) == 0){
+        return(NA)
+      }else{
+        return(tmp)
+      }
     }else{
-      return(tmp)
+      tmp = annot[which(annot[,"hgnc_symbol"]==gene),"ensembl_transcript_id"];
+      if (length(tmp) == 0){
+        return(NA)
+      }else{
+        return(tmp)
+      }
     }
   }
 }
@@ -133,7 +155,7 @@ in_pgAmat <- function(pgAmat,gene){
 }
 
 find_pgAmats <- function(genes,dataset){
-  message('Finding pgAmat containing gene')
+  message('Finding pgAmats containing gene')
   tmp = list()
   if(all(is.na(genes)==TRUE)){
     return(NA)
@@ -143,11 +165,42 @@ find_pgAmats <- function(genes,dataset){
     }
   }
   tmp = unlist(tmp)
+  tmp = unique(tmp)
   return(tmp)
 }
 
 int_graph <- function(pgAmat){
   message('Generating and plotting network figure')
+  names <- colnames(pgAmat);
+  i=0;
+  for(name in names){
+    i=i+1;
+    if(name %in% annot[,"ensembl_gene_id"]){
+      message('Gene with gene symbol')
+      tmp = annot[which(annot[,"ensembl_gene_id"]==name),"hgnc_symbol"]
+      if(!is.na(tmp)){
+        names[i] = paste0("Gene: ", tmp, ": ", name)
+      }else{
+        names[i] = paste0("Gene: ",name)
+      }
+    }else if(substr(name,1,regexpr("\\.",name)-1) %in% annot[,"ensembl_transcript_id"]){
+      message('Pseudogene with gene symbol')
+      tmp = annot[which(annot[,"ensembl_transcript_id"]==substr(name,1,regexpr("\\.",name)-1)),"hgnc_symbol"]
+      if(!is.na(tmp)){
+        names[i] = paste0("Pseudogene: ", tmp, ": ", name)
+      }else{
+        names[i] = paste0("Pseudogene: ",name)
+      }
+    }else if(substr(name,1,4)=="ENST"){
+      message('Pseudogene without gene symbol')
+      names[i] = paste0("Pseudogene: ",name)
+    }else{
+      message('Gene without gene symbol')
+      names[i] = paste0("Gene: ",name)
+    }
+  }
+  row.names(pgAmat) = names;
+  colnames(pgAmat) = names;
   g = graph_from_adjacency_matrix(log2(pgAmat),mode="undirected",weighted=TRUE);
   E(g)$weight = max(E(g)$weight)-E(g)$weight;
   mstg = mst(g,weights=E(g)$weight);
@@ -164,8 +217,8 @@ int_graph <- function(pgAmat){
   #plot.igraph(mstg,vertex.label=V(mstg)$name,layout=layout.fruchterman.reingold, edge.color="black",edge.width=E(mstg)$weight)
 }
 
-search2network <- function(gene,dataset,annot,idx){
-  genes <- map_gene(gene,annot);
+search2network <- function(gene,isgene,dataset,annot,idx){
+  genes <- map_genes(gene,isgene,annot);
   pgAmats <- find_pgAmats(genes,dataset);
   if(idx<=length(pgAmats)){
     return(int_graph(as.matrix(dataset[[pgAmats[idx]]])))
@@ -174,24 +227,32 @@ search2network <- function(gene,dataset,annot,idx){
   }
 }
 
-search2GOtbl <- function(gene,go,dataset,annot,inc0){
-  if(go == "Run GO Analysis"){
+num_networks <- function(gene,isgene,dataset,annot){
+  genes <- map_genes(gene,isgene,annot)
+  pgAmats <- find_pgAmats(genes,dataset)
+  return(length(pgAmats))
+}
+
+search2GOtbl <- function(gene,isgene,go,dataset,annot,inc0){
+  if(go != "Do Not Run GO Analysis"){
+    if(go=="Run GO Analysis: Biological Process"){ontol="BP"; top_nodes=10000}
+    else if(go =="Run GO Analysis: Molecular Function"){ontol="MF"; top_nodes=2500}
+    else{ontol="CC"; top_nodes=1000}
     library('org.Hs.eg.db')
     message('Generating GO table')
-    genes <- map_gene(gene,annot);
-    pgAmats <- find_pgAmat(genes,dataset);
+    genes <- map_genes(gene,isgene,annot);
+    pgAmats <- find_pgAmats(genes,dataset);
     gene_set = c()
     for(pgAmat in pgAmats){
       gene_set <- rbind(names(dataset[[pgAmat]]))
     }
-    gene_set <- names(dataset[[pgAmats]])
     genes_all <- factor(as.integer(annot[,'ensembl_gene_id'] %in% gene_set))
     names(genes_all) <- annot[,'ensembl_gene_id'];
     #genes_all = genes_all[!is.na(names(genes_all))]
     #geneID2GO <- readMappings(file = system.file("examples/geneid2go.map", package = "topGO"))
     #idx = c(which(genes_all==1),sample(which(genes_all==0), 10000, replace = FALSE))
     #genes_all = genes_all[idx]
-    GOdata <- new("topGOdata",ontology = "BP",
+    GOdata <- new("topGOdata",ontology = ontol,
                 allGenes = genes_all,
                 geneSel=function(p) p == 1,
                 description ="inNetwork",
@@ -202,7 +263,7 @@ search2GOtbl <- function(gene,go,dataset,annot,inc0){
     resultKS.elim <- runTest(GOdata, algorithm = "elim", statistic = "ks")
     allRes <- GenTable(GOdata, classicFisher = resultFisher,
                      classicKS = resultKS, elimKS = resultKS.elim,
-                     orderBy = "elimKS", ranksOf = "classicFisher", topNodes = 10000)
+                     orderBy = "elimKS", ranksOf = "classicFisher", topNodes = top_nodes)
     if(inc0){
       return(allRes)
     }else{
