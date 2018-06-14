@@ -41,22 +41,35 @@ navbarPage(
         prettyCheckbox(inputId = "isgene", label = "Gene Query", value = TRUE, icon = icon("check")),
         
 
-        selectInput("go",
+        awesomeRadio("go",
                     label = "GO Analysis",
-                    choices = c("Run GO Analysis: Biological Process",
-                                "Run GO Analysis: Molecular Function",
-                                "Run GO Analysis: Cellular Component",
-                                "Do Not Run GO Analysis"),
-                    selected = "Do Not Run GO Analysis"),
-        
+                    choices = list("Do Not Run GO Analysis"=0,
+                                   "Run GO Analysis: Biological Process"=1,
+                                   "Run GO Analysis: Molecular Function"=2,
+                                   "Run GO Analysis: Cellular Component"=3),
+                              # c("Run GO Analysis: Biological Process",
+                              #   "Run GO Analysis: Molecular Function",
+                              #   "Run GO Analysis: Cellular Component",
+                              #   "Do Not Run GO Analysis"),
+                    status = "primary"),
+        conditionalPanel(condition="input.go > 0",
+                         helpText("Fisher classic will be run by default. KS Classic and KS elim are optional and may cost longer time (few minutes)."),
+                         prettyCheckbox(inputId = "run.ks", label = "Run KS Classic", value = F, icon = icon("check")),
+                         prettyCheckbox(inputId = "run.ks.elim", label = "Run KS elim", value = F, icon = icon("check")),
+                         prettyCheckbox(inputId = "inc0", label = "Include GO terms without any assigned genes", value = FALSE, icon = icon("check"))
+                         ),
         # checkboxInput("inc0", "Include GO terms without any assigned genes", value = FALSE)
-        prettyCheckbox(inputId = "inc0", label = "Include GO terms without any assigned genes", value = FALSE, icon = icon("check"))
+        
+        actionButton("action1", "Confirm and Run", style="color: WHITE; background-color: DODGERBLUE")
       ),
       
       # Main panel for displaying outputs ----
       mainPanel(
         tabsetPanel(id = "tabs",
-          tabPanel("GO Analysis", "This is the hello tab")
+          tabPanel("GO Analysis",
+                   h4("GO Analysis", style="color: STEELBLUE"),
+                   DT::dataTableOutput("GOtable")
+                   )
         )
       )
     )

@@ -24,6 +24,7 @@ library('biomaRt')
 library('igraph')
 library('networkD3')
 library('topGO')
+library('org.Hs.eg.db')
 
 
 letters_only <- function(x) !grepl("[^A-Za-z]", x)
@@ -233,12 +234,14 @@ num_networks <- function(gene,isgene,dataset,annot){
   return(length(pgAmats))
 }
 
-search2GOtbl <- function(gene,isgene,go,dataset,annot,inc0){
+search2GOtbl <- function(gene,isgene,go,dataset,annot,inc0,
+                         run.ks, run.ks.elim){
   if(go != "Do Not Run GO Analysis"){
-    if(go=="Run GO Analysis: Biological Process"){ontol="BP"; top_nodes=10000}
-    else if(go =="Run GO Analysis: Molecular Function"){ontol="MF"; top_nodes=2500}
-    else{ontol="CC"; top_nodes=1000}
-    library('org.Hs.eg.db')
+    if(go=="Run GO Analysis: Biological Process"){
+      ontol="BP"; top_nodes=10000
+    } else if(go =="Run GO Analysis: Molecular Function"){
+      ontol="MF"; top_nodes=2500
+    } else{ontol="CC"; top_nodes=1000}
     message('Generating GO table')
     genes <- map_genes(gene,isgene,annot);
     pgAmats <- find_pgAmats(genes,dataset);
@@ -257,13 +260,27 @@ search2GOtbl <- function(gene,isgene,go,dataset,annot,inc0){
                 geneSel=function(p) p == 1,
                 description ="inNetwork",
                 annot=annFUN.org, mapping="org.Hs.eg.db", ID="Ensembl")
-
     resultFisher <- runTest(GOdata, algorithm = "classic", statistic = "fisher")
-    resultKS <- runTest(GOdata, algorithm = "classic", statistic = "ks")
-    resultKS.elim <- runTest(GOdata, algorithm = "elim", statistic = "ks")
-    allRes <- GenTable(GOdata, classicFisher = resultFisher,
-                     classicKS = resultKS, elimKS = resultKS.elim,
-                     orderBy = "elimKS", ranksOf = "classicFisher", topNodes = top_nodes)
+    if(run.ks){resultKS <- runTest(GOdata, algorithm = "classic", statistic = "ks")}
+    if(run.ks.elim){resultKS.elim <- runTest(GOdata, algorithm = "elim", statistic = "ks")}
+    
+    if(run.ks & run.ks.elim){
+      allRes <- GenTable(GOdata, classicFisher = resultFisher,
+                       classicKS = resultKS, elimKS = resultKS.elim,
+                       orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = top_nodes)
+    } else if(run.ks & !run.ks.elim){
+      allRes <- GenTable(GOdata, classicFisher = resultFisher,
+                         classicKS = resultKS,
+                         orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = top_nodes)
+    } else if(!run.ks & run.ks.elim){
+      allRes <- GenTable(GOdata, classicFisher = resultFisher,
+                         elimKS = resultKS.elim,
+                         orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = top_nodes)
+    } else {
+      allRes <- GenTable(GOdata, classicFisher = resultFisher,
+                         orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = top_nodes)
+    }
+    
     if(inc0){
       return(allRes)
     }else{
