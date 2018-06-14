@@ -65,7 +65,8 @@ navbarPage(
   tabPanel("Read Me"
   ),
   tabPanel("About"
-  )
+  ),
+  tags$head(tags$script(HTML("document.title = 'PseudoFuN DB Search';"))) # rename the title by JS
 )# end of navbar page
 
 
