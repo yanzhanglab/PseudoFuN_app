@@ -53,16 +53,16 @@ load_dataset <- function(dataset){
   }
 }
 
-get_annot <- function(){
-  message('Retrieving GENCODE annotation')
-  listMarts(host='dec2016.archive.ensembl.org')
-  ensembl74 <- useMart(host='dec2016.archive.ensembl.org', 
-                       biomart='ENSEMBL_MART_ENSEMBL', 
-                       dataset='hsapiens_gene_ensembl')
-  annot <- getBM(attributes=c('ensembl_transcript_id', 'ensembl_gene_id', 'entrezgene', 'hgnc_symbol', 'start_position', 'end_position', 'band'),
-                 mart=ensembl74)
-  return(annot)
-}
+# get_annot <- function(){
+#   message('Retrieving GENCODE annotation')
+#   listMarts(host='dec2016.archive.ensembl.org')
+#   ensembl74 <- useMart(host='dec2016.archive.ensembl.org', 
+#                        biomart='ENSEMBL_MART_ENSEMBL', 
+#                        dataset='hsapiens_gene_ensembl')
+#   annot <- getBM(attributes=c('ensembl_transcript_id', 'ensembl_gene_id', 'entrezgene', 'hgnc_symbol', 'start_position', 'end_position', 'band'),
+#                  mart=ensembl74)
+#   return(annot)
+# }
 
 map_genes <- function(gene,isgene,annot){
   message('Mapping genes back to gencode annotation')
@@ -274,5 +274,26 @@ search2GOtbl <- function(gene,isgene,go,dataset,annot,inc0){
   }
 }
 
-
+# smartModal is for showing processing windows. To close a smartModal, a "removeModal()" should followed.
+smartModal <- function(error=c(T,F), title = "Title", content = "Content"){
+  if(error){
+    showModal(modalDialog(
+      title = title, footer = modalButton("OK"), easyClose = TRUE,
+      div(class = "busy",
+          p(content),
+          style = "margin: auto; text-align: center"
+      )
+    ))
+  }
+  else{
+    showModal(modalDialog(
+      title = title, footer = NULL,
+      div(class = "busy",
+          p(content),
+          img(src="https://cdn.dribbble.com/users/503653/screenshots/3143656/fluid-loader.gif"),
+          style = "margin: auto; text-align: center"
+      )
+    ))
+  }
+}
 
