@@ -1,10 +1,8 @@
-# if(!require(networkD3)){
-#   install.packages('networkD3')
-# }
+
 library('shiny')
 library('networkD3')
 source('helpers.R')
-library(shinyWidgets)
+library('shinyWidgets')
 
 # Define UI for app that draws a histogram ----
 
@@ -75,8 +73,14 @@ navbarPage(
     )
   ), # end of tabPanel "Search Engine"
   
-  tabPanel("Read Me"
-  ),
+  tabPanel("Read Me",
+             fluidRow(
+               column(width = 8, offset = 1,
+                      includeMarkdown("README.md")
+               )
+             )
+          ),
+  
   tabPanel("About"
   ),
   tags$head(tags$script(HTML("document.title = 'PseudoFuN DB Search';"))) # rename the title by JS

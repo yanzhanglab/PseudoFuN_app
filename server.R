@@ -9,26 +9,6 @@ function(input, output, session) {
   load("./annot.Rdata")
   annot <<- annot
   
-  # GOanalysis <- reactive({
-  #   search2GOtbl(input$gene,input$isgene,input$go,dataset,annot,input$inc0)
-  # })
-  # 
-  # GOtable <- reactive({
-  #   renderTable({
-  #     GOanalysis()
-  #     })
-  #   })
-  
-  readme <- reactive({
-    renderUI({  
-      fluidRow(
-        column(width = 8, offset = 1,
-              includeMarkdown("README.md")
-        )
-      )
-    })
-  })
-  
   observeEvent(input$action1, {
     dataset <<- load_dataset(input$db)
     if (length(tabs.list) > 0){
