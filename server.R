@@ -8,19 +8,16 @@ function(input, output, session) {
   tabs.list <<- NULL
   load("./annot.Rdata")
   annot <<- annot
-  dataset <- reactive({
-    load_dataset(input$db)
-  })
   
-  GOanalysis <- reactive({
-    search2GOtbl(input$gene,input$isgene,input$go,dataset(),annot,input$inc0)
-  })
-  
-  GOtable <- reactive({
-    renderTable({
-      GOanalysis()
-      })
-    })
+  # GOanalysis <- reactive({
+  #   search2GOtbl(input$gene,input$isgene,input$go,dataset,annot,input$inc0)
+  # })
+  # 
+  # GOtable <- reactive({
+  #   renderTable({
+  #     GOanalysis()
+  #     })
+  #   })
   
   readme <- reactive({
     renderUI({  
@@ -33,6 +30,7 @@ function(input, output, session) {
   })
   
   observeEvent(input$action1, {
+    dataset <<- load_dataset(input$db)
     if (length(tabs.list) > 0){
       for (i in 1:length(tabs.list)){
         print("remove tabs")
@@ -41,35 +39,40 @@ function(input, output, session) {
       }
       tabs.list <<- NULL
     }
-    for (i in 1:num_tabs)
     print("rendering network panels...")
     smartModal(error=F, title = "Processing", content = "We are processing your request ...")
-    t <- try(num_tabs <<- num_networks(input$gene,input$isgene,dataset(),annot))
+    t <- try(num_tabs <<- num_networks(input$gene,input$isgene,dataset,annot))
     if("try-error" %in% class(t)) {
       removeModal()
       print("Error occured")
+      print(dataset)
       smartModal(error=T, title = "Error occured", content = "Error occured. Try to enter a valid gene.")
       return()
     }
     else{
-      GOanalysis <- search2GOtbl(input$gene,input$isgene,input$go,dataset(),annot,input$inc0,
-                                 input$run.ks, input$run.ks.elim)
-      output$GOtable <- DT::renderDataTable({
-        GOanalysis
-      },selection="none",options=list(searching=F, ordering=F))#,extensions = 'Responsive'
-      
+      if (input$go > 0){
+        GOanalysis <- search2GOtbl(input$gene,input$isgene,input$go,dataset,annot,input$inc0,
+                                   input$run.ks, input$run.ks.elim)
+        output$GOtable <- DT::renderDataTable({
+          GOanalysis
+        },selection="none",options=list(searching=F, ordering=F))#,extensions = 'Responsive'
+      }
       for (i in 1:num_tabs){
-        print(i)
+        # print(i)
         tabs.list <<- c(tabs.list, paste0('Network ',i))
         appendTab(inputId = "tabs",
                   tab = tabPanel(paste0('Network ',i),
                                  h2(paste0('Network ',i), style="color: STEELBLUE; font-size: 22px"),
                                  forceNetworkOutput(paste0('net',i)))
         )
-        removeModal()
+      }
+      removeModal()
+      Map(function(i) {
+        print(paste0('net',i))
         output[[paste0('net',i)]] <- renderForceNetwork({
+          print("render force map")
           smartModal(error=F, title = "Processing", content = "Initializing Force Directed Networks ...")
-          t2 <- try(g <- search2network(input$gene,input$isgene,dataset(),annot,i))
+          t2 <- try(g <- search2network(input$gene,input$isgene,dataset,annot,i))
           if("try-error" %in% class(t2)) {
             removeModal()
             print("Error occured")
@@ -81,7 +84,8 @@ function(input, output, session) {
                        Source = 'source', Target = 'target', NodeID = 'name',
                        Group = 'group', fontSize = 16)
         })
-      }
+      },
+      1:num_tabs)
     }
   })
   
