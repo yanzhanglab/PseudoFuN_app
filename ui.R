@@ -3,6 +3,8 @@ library('networkD3')
 source('helpers.R')
 library('shinyWidgets')
 library(markdown)
+library(colourpicker)
+
 # Define UI for app that draws a histogram ----
 
 
@@ -15,6 +17,7 @@ navbarPage(
               "PseudoFuN DB Search", href="")
            ),
   
+  
   tabPanel("Search Engine",
     # Sidebar layout with input and output definitions ----
     sidebarLayout(
@@ -23,8 +26,9 @@ navbarPage(
       sidebarPanel(width = 3,
         
         # Input: Slider for the number of bins ----
+        h4("Choose a database", style="color: STEELBLUE"),
         selectInput("db",
-                    label = "Choose a database",
+                    label = "",
                     choices = c("BlastDB",
                                 "CUDAlign18",
                                 "CUDAlign54",
@@ -32,22 +36,20 @@ navbarPage(
                                 "CUDAlign198"),
                     selected = "CUDAlign54"),
         
-        textInput("gene", h3("Enter a gene"),
+        textInput("gene",
+                  h4("Enter a gene", style="color: STEELBLUE"),
                   value = "ENST00000533288.5"),
         
         prettyCheckbox(inputId = "isgene", label = "Gene Query", value = TRUE, icon = icon("check")),
         
-
+        
+        h4("GO Analysis", style="color: STEELBLUE"),
         awesomeRadio("go",
-                    label = "GO Analysis",
+                    label = "",
                     choices = list("Do Not Run GO Analysis"=0,
                                    "Run GO Analysis: Biological Process"=1,
                                    "Run GO Analysis: Molecular Function"=2,
                                    "Run GO Analysis: Cellular Component"=3),
-                              # c("Run GO Analysis: Biological Process",
-                              #   "Run GO Analysis: Molecular Function",
-                              #   "Run GO Analysis: Cellular Component",
-                              #   "Do Not Run GO Analysis"),
                     status = "primary"),
         conditionalPanel(condition="input.go > 0",
                          helpText("Fisher classic will be run by default. KS Classic and KS elim are optional and may cost longer time (few minutes)."),
@@ -79,16 +81,57 @@ navbarPage(
       )
   ), # end of tabPanel "Search Engine"
   
+  tabPanel("Circos Plot",
+           sidebarLayout(
+             position = "left",
+             sidebarPanel(
+               width = 3,
+               h4("Change Plot Size", style="color: STEELBLUE"),
+               sliderInput(inputId="plot.width", label="Plot Width:", min=200, max=2000, value=800),
+               sliderInput(inputId="plot.height", label="Plot Height:", min=200, max=2000, value=800),
+               sliderInput(inputId="plot.margin", label="Plot Margin:", min=0, max=200, value=10),
+               fluidRow(
+                 column(6, numericInput(inputId="font.scale", label="Font Scale:", value = 1.6, min = 0.2, max=10, step = 0.1)),
+                 column(6, numericInput(inputId="line.width", label="Line Width:", value = 5, min = 1, max=100, step = 1))
+               ),fluidRow(
+                 column(6, numericInput(inputId="symbol.size", label="Symbol Size:", value = 2, min = 0.1, max=10, step = 0.1)),
+                 column(6,"")
+               ),
+               colourInput(inputId="color.picker",label="Choose Line Color:",value="pink",
+                           showColour = "both",palette = "square"),
+               actionButton("action3", "Refresh", style="color: WHITE; background-color: DODGERBLUE")
+               
+               
+             ),
+             mainPanel(
+               h2("hg19:", style="color: STEELBLUE; font-size: 22px"),
+               plotOutput("circos.plot.1", width = "100%", height = "100%"),
+               h2("hg38:", style="color: STEELBLUE; font-size: 22px"),
+               plotOutput("circos.plot.2", width = "100%", height = "100%"),
+               h2("Legend:", style="color: STEELBLUE; font-size: 22px"),
+               plotOutput("circos.plot.legend", width = "400px", height = "400px")
+             ) # end of mainPanel
+           ) # end of sidebarLayout
+  ),
   tabPanel("Read Me",
-             # fluidRow(
-             #   column(width = 8, offset = 1,
-                      includeMarkdown("./README.md")
-             #   )
-             # )
+           # fluidRow(
+           #   column(width = 8, offset = 1,
+           includeMarkdown("./README.md")
+           #   )
+           # )
   ),
   tabPanel("About"
   ),
-  tags$head(tags$script(HTML("document.title = 'PseudoFuN DB Search';"))) # rename the title by JS
+  
+  tags$head(
+    tags$script(HTML("(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+                     m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+                     })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+                     
+                     ga('create', 'UA-113406500-2', 'auto');
+                     ga('send', 'pageview');")),
+    tags$script(HTML("document.title = 'PseudoFuN DB Search';"))# rename the title by JS
+  )
 )# end of navbar page
 
 
