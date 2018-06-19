@@ -39,6 +39,17 @@ function(input, output, session) {
         output$GOtable <- DT::renderDataTable({
           GOanalysis
         },selection="none",options=list(searching=F, ordering=F))#,extensions = 'Responsive'
+        output$download_go <- downloadHandler(
+          filename = function() {
+             name = "GO_result.csv"
+          },
+          content = function(file) {
+             write.table(GOanalysis, file = file, append = FALSE, quote = TRUE, sep = ',',
+                         eol = "\r\n", na = "NA", dec = ".", row.names = F,
+                         col.names = T, qmethod = c("escape", "double"),
+                         fileEncoding = "")
+        })
+        session$sendCustomMessage("download_go","-")
       }
       for (i in 1:num_tabs){
         # print(i)
@@ -65,7 +76,8 @@ function(input, output, session) {
           removeModal()
           forceNetwork(Links = g$links, Nodes=g$nodes,
                        Source = 'source', Target = 'target', NodeID = 'name',
-                       Group = 'group', fontSize = 16)
+                       Nodesize = 'group',
+                       Group = 'group', fontSize = 16,  fontFamily = 'sans')
         })
       },
       1:num_tabs)

@@ -65,11 +65,18 @@ navbarPage(
         tabsetPanel(id = "tabs",
           tabPanel("GO Analysis",
                    h4("GO Analysis (all networks)", style="color: STEELBLUE"),
-                   DT::dataTableOutput("GOtable")
+                   DT::dataTableOutput("GOtable"),
+                   tags$head(tags$script('// disable download at startup.
+                                         $(document).ready(function() {
+                                         $("#download_go").attr("disabled", "true").attr("onclick", "return false;");
+                                         Shiny.addCustomMessageHandler("download_go", function(message) {
+                                         $("#download_go").removeAttr("disabled").removeAttr("onclick");
+                                         });
+                                         })')),
+                   downloadButton('download_go', 'Download GO Analysis Results (CSV)'))
                    )
         )
       )
-    )
   ), # end of tabPanel "Search Engine"
   
   tabPanel("Read Me",
