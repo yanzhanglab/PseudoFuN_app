@@ -1,9 +1,8 @@
-
 library('shiny')
 library('networkD3')
 source('helpers.R')
 library('shinyWidgets')
-
+library(markdown)
 # Define UI for app that draws a histogram ----
 
 
@@ -65,7 +64,7 @@ navbarPage(
       mainPanel(
         tabsetPanel(id = "tabs",
           tabPanel("GO Analysis",
-                   h4("GO Analysis", style="color: STEELBLUE"),
+                   h4("GO Analysis (all networks)", style="color: STEELBLUE"),
                    DT::dataTableOutput("GOtable")
                    )
         )
@@ -74,13 +73,12 @@ navbarPage(
   ), # end of tabPanel "Search Engine"
   
   tabPanel("Read Me",
-             fluidRow(
-               column(width = 8, offset = 1,
-                      includeMarkdown("README.md")
-               )
-             )
-          ),
-  
+             # fluidRow(
+             #   column(width = 8, offset = 1,
+                      includeMarkdown("./README.md")
+             #   )
+             # )
+  ),
   tabPanel("About"
   ),
   tags$head(tags$script(HTML("document.title = 'PseudoFuN DB Search';"))) # rename the title by JS

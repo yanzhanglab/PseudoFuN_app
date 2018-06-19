@@ -267,15 +267,15 @@ search2GOtbl <- function(gene,isgene,go,dataset,annot,inc0,
     if(run.ks & run.ks.elim){
       allRes <- GenTable(GOdata, classicFisher = resultFisher,
                        classicKS = resultKS, elimKS = resultKS.elim,
-                       orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = top_nodes)
+                       orderBy = "elimKS", ranksOf = "elimKS", topNodes = top_nodes)
     } else if(run.ks & !run.ks.elim){
       allRes <- GenTable(GOdata, classicFisher = resultFisher,
                          classicKS = resultKS,
-                         orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = top_nodes)
+                         orderBy = "classicKS", ranksOf = "classicKS", topNodes = top_nodes)
     } else if(!run.ks & run.ks.elim){
       allRes <- GenTable(GOdata, classicFisher = resultFisher,
                          elimKS = resultKS.elim,
-                         orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = top_nodes)
+                         orderBy = "elimKS", ranksOf = "elimKS", topNodes = top_nodes)
     } else {
       allRes <- GenTable(GOdata, classicFisher = resultFisher,
                          orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = top_nodes)

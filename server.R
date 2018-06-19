@@ -31,8 +31,11 @@ function(input, output, session) {
     }
     else{
       if (input$go > 0){
+        removeModal()
+        smartModal(error=F, title = "Processing", content = "We are processing your GO analysis (may take a few minutes)")
         GOanalysis <- search2GOtbl(input$gene,input$isgene,input$go,dataset,annot,input$inc0,
                                    input$run.ks, input$run.ks.elim)
+        removeModal()
         output$GOtable <- DT::renderDataTable({
           GOanalysis
         },selection="none",options=list(searching=F, ordering=F))#,extensions = 'Responsive'
