@@ -112,7 +112,34 @@ navbarPage(
            #   )
            # )
   ),
-  tabPanel("About"
+  tabPanel("Tutorial",
+           h3("Tutorial", style="color: STEELBLUE; padding-bottom: 20px"),
+           h4("Google Slides", style="text-align: center; color: STEELBLUE; padding-bottom: 20px"),
+           tags$div(
+             HTML("<iframe src=\"https://docs.google.com/presentation/d/e/2PACX-1vSv-c_P5P2dFCo9oP67JeBWRIrjZkxLgEkytC6edxUps7l4udMdWHqZx9kiltOwlIoWyWgJH-yDPqJY/embed?start=false&loop=false&delayms=3000\" frameborder=\"0\" width=\"960\" height=\"749\" allowfullscreen=\"true\" mozallowfullscreen=\"true\" webkitallowfullscreen=\"true\"></iframe>"),
+             style="text-align: center; padding: 20px"
+           )
+  ),
+  tabPanel("About",
+           h3("About Us", style="color: STEELBLUE; padding-bottom: 20px"),
+           "blah blah blah blah ...",
+           tags$div(
+             tags$img(src='images/osumc_logo.png',
+                      height="125",
+                      alt="TSUNAMI", class="center", style="padding: 30px"),
+             tags$img(src='images/IUSM2.png',
+                      height="100",
+                      alt="TSUNAMI", class="center", style="padding: 30px"),
+             style="text-align: center; padding: 20px"
+           ),
+           h4("Development Team", style="color: STEELBLUE; padding-bottom: 20px"),
+           h5("Prof. AAA's Laboratory", style="color: STEELBLUE"),
+           tags$ul(
+             tags$li("a"),
+             tags$li("b"),
+             tags$li("c"),
+             tags$li("d")
+           )
   ),
   
   tags$head(
@@ -130,6 +157,12 @@ navbarPage(
                 }
                 });'),
     tags$script(HTML("document.title = 'PseudoFuN DB Search';"))# rename the title by JS
+  ),
+  
+  tags$div(
+    p(a("PseudoFuN", href=""), "Version Beta | ", a("OSUMC",href="http://www.osumc.com/home", target="_blank"), " | ", a("IUSM",href="https://medicine.iu.edu/", target="_blank"), style="color: grey; font-size: 12px"), 
+    p("Questions and feedback: travis.johnson@osumc.edu | ", a("Report Issue", href="https://github.com/yanzhanglab/PseudoFuN_app/issues", target="_blank"), " | ", a("Github", href="https://github.com/yanzhanglab/PseudoFuN_app", target="_blank"), style="color: grey; font-size: 12px"),
+    style="text-align: center; padding-top: 40px"
   )
 )# end of navbar page
 
