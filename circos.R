@@ -1,7 +1,7 @@
 # 06/19/2018 Zhi Huang
 
 library(circlize)
-circlizeGenomics <- function(BED.data, factors, xlim, mySpecies, myTitle, circos_param_genelink, circos_param_genesymbol){
+circlizeGenomics <- function(BED.data, factors, xlim, mySpecies, myTitle, circos_param_genelink, circos_param_genesymbol, font.scale, link.width, color.picker){
   # save(BED.data, file ="~/Desktop/BEDdata.Rdata")
   par(mar = c(1, 1, 1, 1))
   # reference: http://zuguang.de/circlize_book/book/initialize-genomic-plot.html#initialize-cytoband
@@ -50,7 +50,7 @@ circlizeGenomics <- function(BED.data, factors, xlim, mySpecies, myTitle, circos
         if(j<i){
           circos.link(sector.index1=BED.data$chrom[i], point1=c(BED.data$txStart[i],BED.data$txEnd[i]),
                       sector.index2=BED.data$chrom[j], point2=c(BED.data$txStart[j],BED.data$txEnd[j]),
-                      col = "cadetblue1")
+                      col = color.picker, lwd = link.width)
           # R color: http://www.stat.columbia.edu/~tzheng/files/Rcolor.pdf
         }
       }
@@ -58,7 +58,12 @@ circlizeGenomics <- function(BED.data, factors, xlim, mySpecies, myTitle, circos
   }
   if(circos_param_genesymbol){
     circos.genomicLabels(BED.data, labels.column = 5, side = "inside",
-                         col = as.numeric(factor(BED.data[[1]])), line_col = as.numeric(factor(BED.data[[1]])))
+                         cex = 0.8*font.scale,
+                         col = "black",
+                         line_col = "black"
+                         # col = as.numeric(factor(BED.data[[1]])),
+                         #line_col = as.numeric(factor(BED.data[[1]]))
+                         )
   }
   
   

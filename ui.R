@@ -86,30 +86,25 @@ navbarPage(
              position = "left",
              sidebarPanel(
                width = 3,
-               h4("Change Plot Size", style="color: STEELBLUE"),
-               sliderInput(inputId="plot.width", label="Plot Width:", min=200, max=2000, value=800),
-               sliderInput(inputId="plot.height", label="Plot Height:", min=200, max=2000, value=800),
-               sliderInput(inputId="plot.margin", label="Plot Margin:", min=0, max=200, value=10),
+               h4("Change Plot Setting", style="color: STEELBLUE"),
+               helpText("Rendering Circos Plot could cost up to 1 minutes. Please be patient."),
+               prettyCheckbox(inputId = "circos_param_genelink", label = "Show Pair-wise Links", value = T, icon = icon("check")),
+               prettyCheckbox(inputId = "circos_param_genesymbol", label = "Show Gene Symbols", value = T, icon = icon("check")),
                fluidRow(
-                 column(6, numericInput(inputId="font.scale", label="Font Scale:", value = 1.6, min = 0.2, max=10, step = 0.1)),
-                 column(6, numericInput(inputId="line.width", label="Line Width:", value = 5, min = 1, max=100, step = 1))
-               ),fluidRow(
-                 column(6, numericInput(inputId="symbol.size", label="Symbol Size:", value = 2, min = 0.1, max=10, step = 0.1)),
-                 column(6,"")
+                 column(6, numericInput(inputId="font.scale", label="Font Scale:", value = 1, min = 0.2, max=10, step = 0.1)),
+                 column(6, numericInput(inputId="link.width", label="Link Width:", value = 2, min = 1, max=100, step = 0.1))
                ),
-               colourInput(inputId="color.picker",label="Choose Line Color:",value="pink",
+               colourInput(inputId="color.picker",label="Choose Link Color:",value="pink",
                            showColour = "both",palette = "square"),
-               actionButton("action3", "Refresh", style="color: WHITE; background-color: DODGERBLUE")
+               actionButton("action2", "Refresh", style="color: WHITE; background-color: DODGERBLUE")
                
                
              ),
              mainPanel(
-               h2("hg19:", style="color: STEELBLUE; font-size: 22px"),
-               plotOutput("circos.plot.1", width = "100%", height = "100%"),
                h2("hg38:", style="color: STEELBLUE; font-size: 22px"),
-               plotOutput("circos.plot.2", width = "100%", height = "100%"),
-               h2("Legend:", style="color: STEELBLUE; font-size: 22px"),
-               plotOutput("circos.plot.legend", width = "400px", height = "400px")
+               plotOutput("circos_plot_component_hg38", width = 800, height = 600),
+               h2("hg19:", style="color: STEELBLUE; font-size: 22px"),
+               plotOutput("circos_plot_component_hg19", width = 800, height = 600)
              ) # end of mainPanel
            ) # end of sidebarLayout
   ),
@@ -130,6 +125,13 @@ navbarPage(
                      
                      ga('create', 'UA-113406500-2', 'auto');
                      ga('send', 'pageview');")),
+    tags$script('Shiny.addCustomMessageHandler("myCallbackHandler",
+                function(typeMessage) {console.log(typeMessage)
+                if(typeMessage == "tab_circos"){
+                console.log("Go to Circos Plot panel.");
+                $("a:contains(Circos Plot)").click();
+                }
+                });'),
     tags$script(HTML("document.title = 'PseudoFuN DB Search';"))# rename the title by JS
   )
 )# end of navbar page

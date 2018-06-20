@@ -9,9 +9,14 @@ library(circlize)
 function(input, output, session) {
   num_tabs <<- 0
   g <<- NULL
+  g.circos <<- NULL
   tabs.list <<- NULL
   load("./data/annot.Rdata")
+  load("./data/UCSC_hg19_refGene_20180330.Rdata") # varname: hg19
+  load("./data/UCSC_hg38_refGene_20180330.Rdata") # varname: hg38
   annot <<- annot
+  hg19 <<- hg19
+  hg38 <<- hg38
   
   observeEvent(input$action1, {
     dataset <<- load_dataset(input$db)
@@ -98,20 +103,68 @@ function(input, output, session) {
       Map(function(i) {
         print(num_tabs)
         observeEvent(input[[paste0('circos',i)]],{
+          smartModal(error=F, title = "Calculating", content = "Generating Circos Plot ...")
+          g.circos <<- g[[i]]
           print(paste0('circos',i))
-          print(g[[i]]$nodes$name)
+          print(g.circos$nodes$name)
+          genes_str = sapply(strsplit(as.character(g.circos$nodes$name), ": "), "[[", 2)
+          genestype_str = sapply(strsplit(as.character(g.circos$nodes$name), ": "), "[[", 1)
+          pesudogenes_str = sapply(strsplit(as.character(g.circos$nodes$name), ": "), "[[", 3)
+          # genes_str <- c("LOC102725121", "FAM138A", "RIMS2", "LINC01128", "MMP23A", "ULK4P1")
+          hg19 <- data.frame(cbind(rownames(hg19), hg19, hg19[6]-hg19[5]))
+          hg38 <- data.frame(cbind(rownames(hg38), hg38, hg38[6]-hg38[5]))
+          colnames(hg38) = c("id","","name","chrom","strand","txStart","txEnd","cdsStart","cdsEnd","exonCount","exonStarts","exonEnds","proteinID","alignID","","","","length")
+          colnames(hg19) = c("id","","name","chrom","strand","txStart","txEnd","cdsStart","cdsEnd","exonCount","exonStarts","exonEnds","proteinID","alignID","","","","length")
+          hg19.ring <- hg19[!grepl("_", hg19$chrom),] # remove undefined chromosome
+          hg38.ring <- hg38[!grepl("_", hg38$chrom),]
+          hg19.ring <- hg19.ring[!grepl("chrM", hg19.ring$chrom),]
+          hg38.ring <- hg38.ring[!grepl("chrM", hg38.ring$chrom),]
+          hg19.matched <- hg19.ring[match(genes_str, hg19.ring$alignID, nomatch = 0), ]
+          hg38.matched <- hg38.ring[match(genes_str, hg38.ring$alignID, nomatch = 0), ]
+          hg19.ring.lengthsum <- aggregate(hg19.ring["length"],hg19.ring["chrom"],sum)
+          hg38.ring.lengthsum <- aggregate(hg38.ring["length"],hg38.ring["chrom"],sum)
+          print("Plot HG38 Circos")
+          output$circos_plot_component_hg38 <- renderPlot({
+            factors_count = as.data.frame(hg38.ring.lengthsum)
+            factors = factor(factors_count[,1], levels = factors_count[,1])
+            xlim = cbind(rep(0, dim(factors_count)[1]), factors_count[,2])
+            rownames(xlim) = factors_count[,1]
+            BED.data <- data.frame(hg38.matched[,c(4,6:7,10,14)])
+            circlizeGenomics(BED.data, factors, xlim, mySpecies="hg38", myTitle = "Human Genome (GRCh38/hg38)",
+                             input$circos_param_genelink,
+                             input$circos_param_genesymbol,
+                             input$font.scale,
+                             input$link.width,
+                             input$color.picker)
+          })
+          print("Plot HG19 Circos")
+          output$circos_plot_component_hg19 <- renderPlot({
+            factors_count = as.data.frame(hg19.ring.lengthsum)
+            factors = factor(factors_count[,1], levels = factors_count[,1])
+            xlim = cbind(rep(0, dim(factors_count)[1]), factors_count[,2])
+            rownames(xlim) = factors_count[,1]
+            BED.data <- data.frame(hg19.matched[,c(4,6:7,10,14)])
+            circlizeGenomics(BED.data, factors, xlim, mySpecies="hg19", myTitle = "Human Genome (GRCh37/hg19)",
+                             input$circos_param_genelink,
+                             input$circos_param_genesymbol,
+                             input$font.scale,
+                             input$link.width,
+                             input$color.picker)
+          })
+          print("Plot Finished.")
+          removeModal()
+          session$sendCustomMessage("myCallbackHandler", "tab_circos")
         })
       },
       1:num_tabs)
-      
     }
   })
   
-  
-  observeEvent(input$button_circos, {
-    load("./data/UCSC_hg19_refGene_20180330.Rdata") # varname: hg19
-    load("./data/UCSC_hg38_refGene_20180330.Rdata") # varname: hg38
-    genes_str = sub(".*: ", "", g$nodes$name)
+  observeEvent(input$action2,{
+    print(g.circos$nodes$name)
+    genes_str = sapply(strsplit(as.character(g.circos$nodes$name), ": "), "[[", 2)
+    genestype_str = sapply(strsplit(as.character(g.circos$nodes$name), ": "), "[[", 1)
+    pesudogenes_str = sapply(strsplit(as.character(g.circos$nodes$name), ": "), "[[", 3)
     # genes_str <- c("LOC102725121", "FAM138A", "RIMS2", "LINC01128", "MMP23A", "ULK4P1")
     hg19 <- data.frame(cbind(rownames(hg19), hg19, hg19[6]-hg19[5]))
     hg38 <- data.frame(cbind(rownames(hg38), hg38, hg38[6]-hg38[5]))
@@ -125,12 +178,7 @@ function(input, output, session) {
     hg38.matched <- hg38.ring[match(genes_str, hg38.ring$alignID, nomatch = 0), ]
     hg19.ring.lengthsum <- aggregate(hg19.ring["length"],hg19.ring["chrom"],sum)
     hg38.ring.lengthsum <- aggregate(hg38.ring["length"],hg38.ring["chrom"],sum)
-    output$circos_plot_ui_hg38 <- renderUI({
-      plotOutput("circos_plot_component_hg38", width = input$circos_param_size, height = input$circos_param_size)
-    })
-    output$circos_plot_ui_hg19 <- renderUI({
-      plotOutput("circos_plot_component_hg19", width = input$circos_param_size, height = input$circos_param_size)
-    })
+    print("Plot HG38 Circos")
     output$circos_plot_component_hg38 <- renderPlot({
       factors_count = as.data.frame(hg38.ring.lengthsum)
       factors = factor(factors_count[,1], levels = factors_count[,1])
@@ -138,9 +186,13 @@ function(input, output, session) {
       rownames(xlim) = factors_count[,1]
       BED.data <- data.frame(hg38.matched[,c(4,6:7,10,14)])
       circlizeGenomics(BED.data, factors, xlim, mySpecies="hg38", myTitle = "Human Genome (GRCh38/hg38)",
-                       T,T)
+                       input$circos_param_genelink,
+                       input$circos_param_genesymbol,
+                       input$font.scale,
+                       input$link.width,
+                       input$color.picker)
     })
-    
+    print("Plot HG19 Circos")
     output$circos_plot_component_hg19 <- renderPlot({
       factors_count = as.data.frame(hg19.ring.lengthsum)
       factors = factor(factors_count[,1], levels = factors_count[,1])
@@ -149,10 +201,15 @@ function(input, output, session) {
       BED.data <- data.frame(hg19.matched[,c(4,6:7,10,14)])
       circlizeGenomics(BED.data, factors, xlim, mySpecies="hg19", myTitle = "Human Genome (GRCh37/hg19)",
                        input$circos_param_genelink,
-                       input$circos_param_genesymbol)
-      })
-      removeModal()
+                       input$circos_param_genesymbol,
+                       input$font.scale,
+                       input$link.width,
+                       input$color.picker)
     })
+    print("Plot Finished.")
+    removeModal()
+  })
+  
   
 
 }
