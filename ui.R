@@ -40,9 +40,6 @@ navbarPage(
                   h4("Enter a gene", style="color: STEELBLUE"),
                   value = "ENST00000533288.5"),
         
-        prettyCheckbox(inputId = "isgene", label = "Gene Query", value = TRUE, icon = icon("check")),
-        
-        
         h4("GO Analysis", style="color: STEELBLUE"),
         awesomeRadio("go",
                     label = "",

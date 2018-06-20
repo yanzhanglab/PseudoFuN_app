@@ -60,12 +60,12 @@ load_dataset <- function(dataset){
 #   ensembl74 <- useMart(host='dec2016.archive.ensembl.org', 
 #                        biomart='ENSEMBL_MART_ENSEMBL', 
 #                        dataset='hsapiens_gene_ensembl')
-#   annot <- getBM(attributes=c('ensembl_transcript_id', 'ensembl_gene_id', 'entrezgene', 'hgnc_symbol', 'start_position', 'end_position', 'band'),
+#   annot <- getBM(attributes=c('ensembl_transcript_id', 'ensembl_gene_id', 'entrezgene', 'hgnc_symbol', 'start_position', 'end_position', 'band','gene_biotype'),
 #                  mart=ensembl74)
 #   return(annot)
 # }
 
-map_genes <- function(gene,isgene,annot){
+map_genes <- function(gene,annot){
   message('Mapping genes back to gencode annotation')
   # Formatting Ensembl gene name
   if(substr(gene,1,4) == 'ENSG'){
@@ -101,37 +101,25 @@ map_genes <- function(gene,isgene,annot){
     }
   # Formatting entrez gene ID
   }else if (numbers_only(gene)){
-    if(isgene){
-      tmp = annot[which(annot[,"entrezgene"]==gene),"ensembl_gene_id"];
-      if (length(tmp) == 0){
-        return(NA)
-      }else{
-        return(tmp)
-      }
+    tmp = annot[which(annot[,"entrezgene"]==gene),c("gene_biotype","ensembl_gene_id","ensembl_transcript_id")];
+    tmp1 = tmp[,"ensembl_gene_id"]
+    tmp1[grep("pseudogene",tmp[,"gene_biotype"])] = tmp[grep("pseudogene",tmp[,"gene_biotype"]),"ensembl_transcript_id"]
+    tmp1 = unique(tmp1);
+    if (length(tmp1) == 0){
+      return(NA)
     }else{
-      tmp = annot[which(annot[,"entrezgene"]==gene),"ensembl_transcript_id"];
-      if (length(tmp) == 0){
-        return(NA)
-      }else{
-        return(tmp)
-      }
+      return(tmp1)
     }
   # Formatting Hugo gene symbols
   }else{
-    if(isgene){
-      tmp = annot[which(annot[,"hgnc_symbol"]==gene),"ensembl_gene_id"];
-      if (length(tmp) == 0){
-        return(NA)
-      }else{
-        return(tmp)
-      }
+    tmp = annot[which(annot[,"hgnc_symbol"]==gene),c("gene_biotype","ensembl_gene_id","ensembl_transcript_id")];
+    tmp1 = tmp[,"ensembl_gene_id"]
+    tmp1[grep("pseudogene",tmp[,"gene_biotype"])] = tmp[grep("pseudogene",tmp[,"gene_biotype"]),"ensembl_transcript_id"]
+    tmp1 = unique(tmp1);
+    if (length(tmp1) == 0){
+      return(NA)
     }else{
-      tmp = annot[which(annot[,"hgnc_symbol"]==gene),"ensembl_transcript_id"];
-      if (length(tmp) == 0){
-        return(NA)
-      }else{
-        return(tmp)
-      }
+      return(tmp1)
     }
   }
 }
@@ -218,8 +206,8 @@ int_graph <- function(pgAmat){
   #plot.igraph(mstg,vertex.label=V(mstg)$name,layout=layout.fruchterman.reingold, edge.color="black",edge.width=E(mstg)$weight)
 }
 
-search2network <- function(gene,isgene,dataset,annot,idx){
-  genes <- map_genes(gene,isgene,annot);
+search2network <- function(gene,dataset,annot,idx){
+  genes <- map_genes(gene,annot);
   pgAmats <- find_pgAmats(genes,dataset);
   if(idx<=length(pgAmats)){
     return(int_graph(as.matrix(dataset[[pgAmats[idx]]])))
@@ -228,13 +216,13 @@ search2network <- function(gene,isgene,dataset,annot,idx){
   }
 }
 
-num_networks <- function(gene,isgene,dataset,annot){
-  genes <- map_genes(gene,isgene,annot)
+num_networks <- function(gene,dataset,annot){
+  genes <- map_genes(gene,annot)
   pgAmats <- find_pgAmats(genes,dataset)
   return(length(pgAmats))
 }
 
-search2GOtbl <- function(gene,isgene,go,dataset,annot,inc0,
+search2GOtbl <- function(gene,go,dataset,annot,inc0,
                          run.ks, run.ks.elim){
   if(go != "Do Not Run GO Analysis"){
     if(go=="Run GO Analysis: Biological Process"){
@@ -243,7 +231,7 @@ search2GOtbl <- function(gene,isgene,go,dataset,annot,inc0,
       ontol="MF"; top_nodes=2500
     } else{ontol="CC"; top_nodes=1000}
     message('Generating GO table')
-    genes <- map_genes(gene,isgene,annot);
+    genes <- map_genes(gene,annot);
     pgAmats <- find_pgAmats(genes,dataset);
     gene_set = c()
     for(pgAmat in pgAmats){

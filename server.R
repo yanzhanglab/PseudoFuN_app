@@ -30,7 +30,7 @@ function(input, output, session) {
     }
     print("rendering network panels...")
     smartModal(error=F, title = "Processing", content = "We are processing your request ...")
-    t <- try(num_tabs <<- num_networks(input$gene,input$isgene,dataset,annot))
+    t <- try(num_tabs <<- num_networks(input$gene,dataset,annot))
     if("try-error" %in% class(t)) {
       removeModal()
       print("Error occured")
@@ -42,7 +42,7 @@ function(input, output, session) {
       if (input$go > 0){
         removeModal()
         smartModal(error=F, title = "Processing", content = "We are processing your GO analysis (may take a few minutes)")
-        GOanalysis <- search2GOtbl(input$gene,input$isgene,input$go,dataset,annot,input$inc0,
+        GOanalysis <- search2GOtbl(input$gene,input$go,dataset,annot,input$inc0,
                                    input$run.ks, input$run.ks.elim)
         removeModal()
         output$GOtable <- DT::renderDataTable({
@@ -79,7 +79,7 @@ function(input, output, session) {
         output[[paste0('net',i)]] <- renderForceNetwork({
           print("render force map")
           smartModal(error=F, title = "Processing", content = "Initializing Force Directed Networks ...")
-          t2 <- try(g[[i]] <<- search2network(input$gene,input$isgene,dataset,annot,i))
+          t2 <- try(g[[i]] <<- search2network(input$gene,dataset,annot,i))
           if("try-error" %in% class(t2)) {
             removeModal()
             print("Error occured")
@@ -87,7 +87,9 @@ function(input, output, session) {
             return()
           }
           removeModal()
-          targetposition = match(input$gene, sub(".*: ", "", g[[i]]$nodes$name))
+          mapped_genes <- map_genes(input$gene,annot);
+          message(input$gene)
+          targetposition = match(mapped_genes, substr(sub(".*: ", "", g[[i]]$nodes$name),1,15))
           nodesize = rep(1,length(g[[i]]$nodes$name))
           nodesize[targetposition] = 50
           g[[i]]$nodes$size = nodesize
