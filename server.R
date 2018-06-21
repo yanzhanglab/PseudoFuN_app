@@ -11,9 +11,9 @@ function(input, output, session) {
   g <<- NULL
   g.circos <<- NULL
   tabs.list <<- NULL
-  load("./data/annot.Rdata")
-  load("./data/UCSC_hg19_refGene_20180330.Rdata") # varname: hg19
-  load("./data/UCSC_hg38_refGene_20180330.Rdata") # varname: hg38
+  load("data/annot.RData")
+  load("data/UCSC_hg19_refGene_20180330.Rdata") # varname: hg19
+  load("data/UCSC_hg38_refGene_20180330.Rdata") # varname: hg38
   annot <<- annot
   hg19 <<- hg19
   hg38 <<- hg38

@@ -34,11 +34,11 @@ navbarPage(
                                 "CUDAlign54",
                                 "CUDAlign135",
                                 "CUDAlign198"),
-                    selected = "CUDAlign54"),
+                    selected = "BlastDB"),
         
         textInput("gene",
                   h4("Enter a gene", style="color: STEELBLUE"),
-                  value = "ENST00000533288.5"),
+                  value = "PTEN"),
         
         h4("GO Analysis", style="color: STEELBLUE"),
         awesomeRadio("go",
@@ -116,29 +116,33 @@ navbarPage(
            h3("Tutorial", style="color: STEELBLUE; padding-bottom: 20px"),
            h4("Google Slides", style="text-align: center; color: STEELBLUE; padding-bottom: 20px"),
            tags$div(
-             HTML("<iframe src=\"https://docs.google.com/presentation/d/e/2PACX-1vSv-c_P5P2dFCo9oP67JeBWRIrjZkxLgEkytC6edxUps7l4udMdWHqZx9kiltOwlIoWyWgJH-yDPqJY/embed?start=false&loop=false&delayms=3000\" frameborder=\"0\" width=\"960\" height=\"749\" allowfullscreen=\"true\" mozallowfullscreen=\"true\" webkitallowfullscreen=\"true\"></iframe>"),
+             HTML("<iframe src=\"https://docs.google.com/presentation/d/e/2PACX-1vRqdNS0ZHg8z7VTZqBwleJ2MVuzTKXDWqnKNPrRPl3wiXSNY3YxKyvRNdcmo8Pwk6l2q5uzw2VdoHgv/embed?start=false&loop=false&delayms=3000\" frameborder=\"0\" width=\"960\" height=\"569\" allowfullscreen=\"true\" mozallowfullscreen=\"true\" webkitallowfullscreen=\"true\"></iframe>"),
              style="text-align: center; padding: 20px"
            )
   ),
   tabPanel("About",
            h3("About Us", style="color: STEELBLUE; padding-bottom: 20px"),
-           "blah blah blah blah ...",
+           "The Yan Zhang Lab at OSUMC studies statistical and computational methods and their applications to genomic and proteomic research, such as (1) functional and evolutionary impact of structural variations (such as insertions, deletions and retroduplications) in both normal and abnormal populations; (2) association and eQTL analysis of structural variations; (3) integrative analysis of genomic and proteomic data; (4) statistical modeling of biological networks, integrating data of multiple levels.",
            tags$div(
              tags$img(src='images/osumc_logo.png',
                       height="125",
-                      alt="TSUNAMI", class="center", style="padding: 30px"),
+                      alt="OSUMC", class="center", style="padding: 30px"),
              tags$img(src='images/IUSM2.png',
                       height="100",
-                      alt="TSUNAMI", class="center", style="padding: 30px"),
+                      alt="IUSM", class="center", style="padding: 30px"),
              style="text-align: center; padding: 20px"
            ),
            h4("Development Team", style="color: STEELBLUE; padding-bottom: 20px"),
-           h5("Prof. AAA's Laboratory", style="color: STEELBLUE"),
            tags$ul(
-             tags$li("a"),
-             tags$li("b"),
-             tags$li("c"),
-             tags$li("d")
+             tags$li("Travis Johnson"),
+             tags$li("Eric Franz"),
+             tags$li("Zhi Huang")
+           ),
+           h4("Prof. Yan Zhang's Laboratory", style="color: STEELBLUE"),
+           tags$ul(
+             tags$li("Yan Zhang"),
+             tags$li("Travis Johnson"),
+             tags$li("Sihong Li")
            )
   ),
   
@@ -160,7 +164,7 @@ navbarPage(
   ),
   
   tags$div(
-    p(a("PseudoFuN", href=""), "Version Beta | ", a("OSUMC",href="http://www.osumc.com/home", target="_blank"), " | ", a("IUSM",href="https://medicine.iu.edu/", target="_blank"), style="color: grey; font-size: 12px"), 
+    p(a("PseudoFuN", href=""), "Version Beta | ", a("OSUMC",href="https://wexnermedical.osu.edu", target="_blank"), " | ", a("IUSM",href="https://medicine.iu.edu/", target="_blank"), style="color: grey; font-size: 12px"), 
     p("Questions and feedback: travis.johnson@osumc.edu | ", a("Report Issue", href="https://github.com/yanzhanglab/PseudoFuN_app/issues", target="_blank"), " | ", a("Github", href="https://github.com/yanzhanglab/PseudoFuN_app", target="_blank"), style="color: grey; font-size: 12px"),
     style="text-align: center; padding-top: 40px"
   )
