@@ -114,7 +114,7 @@ function(input, output, session) {
                             }'
           forceNetwork(Links = g[[i]]$links, Nodes=g[[i]]$nodes,
                        Source = 'source', Target = 'target', NodeID = 'name',
-                       Nodesize = 'size',
+                       Nodesize = 'size', opacity = 1,
                        Group = 'group', fontSize = 16,  fontFamily = 'sans',
                        clickAction = MyClickScript)
         })
