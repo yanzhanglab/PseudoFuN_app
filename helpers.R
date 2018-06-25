@@ -217,7 +217,7 @@ search2network <- function(gene,dataset,annot,idx){
 }
 
 search2adjmat <- function(gene,dataset,annot,idx){
-  genes <- map_gene(gene,annot);
+  genes <- map_genes(gene,annot);
   pgAmats <- find_pgAmats(genes,dataset);
   if(idx<=length(pgAmats)){
     return(as.matrix(dataset[[pgAmats[idx]]]))

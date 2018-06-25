@@ -4,6 +4,7 @@ num_tabs <- NULL
 tabs.list <- NULL
 dataset <- NULL
 g <- NULL
+adjmat <- NULL
 g.circos <- NULL
 hg19 <- NULL
 hg38 <- NULL

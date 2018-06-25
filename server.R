@@ -9,9 +9,10 @@ library(circlize)
 function(input, output, session) {
   num_tabs <<- 0
   g <<- NULL
+  adjmat <<- NULL
   g.circos <<- NULL
   tabs.list <<- NULL
-  load("data/annot.RData")
+  load("data/annot.Rdata")
   load("data/UCSC_hg19_refGene_20180330.Rdata") # varname: hg19
   load("data/UCSC_hg38_refGene_20180330.Rdata") # varname: hg38
   annot <<- annot
@@ -69,6 +70,8 @@ function(input, output, session) {
                                  style="color: STEELBLUE; font-size: 22px"),
                                  forceNetworkOutput(paste0('net',i)),
                                  actionButton(paste0('circos',i), "Circos Plot", style="color: WHITE; background-color: #FFC300"),
+                                 downloadButton(paste0('download_net',i), 'Download Adjacency Matrix'),
+                                 helpText("The elements in adjacency matrix indicating the similarity between each genes."),
                                  br(),br()
                   )
         )
@@ -86,6 +89,13 @@ function(input, output, session) {
             smartModal(error=T, title = "Error occured", content = "Searching Network Failed. Try to enter a valid gene.")
             return()
           }
+          t2 <- try(adjmat[[i]] <<- search2adjmat(input$gene,dataset,annot,i))
+          if("try-error" %in% class(t2)) {
+            removeModal()
+            print("Error occured")
+            smartModal(error=T, title = "Error occured", content = "Searching Network Failed. Try to enter a valid gene.")
+            return()
+          }
           removeModal()
           mapped_genes <- map_genes(input$gene,annot);
           message(input$gene)
@@ -93,13 +103,39 @@ function(input, output, session) {
           nodesize = rep(1,length(g[[i]]$nodes$name))
           nodesize[targetposition] = 50
           g[[i]]$nodes$size = nodesize
+          MyClickScript <- ''
+          MyClickScript <- 'var split = d.name.split(": ");
+                            var genename = split[1];
+                            if (genename.length > 0){
+                                window.open("https://www.genecards.org/cgi-bin/carddisp.pl?gene="+genename, "_blank");
+                            }
+                            else{
+                                alert(d.name + " doesn\'t contain any gene symbol!");
+                            }'
           forceNetwork(Links = g[[i]]$links, Nodes=g[[i]]$nodes,
                        Source = 'source', Target = 'target', NodeID = 'name',
                        Nodesize = 'size',
-                       Group = 'group', fontSize = 16,  fontFamily = 'sans')
+                       Group = 'group', fontSize = 16,  fontFamily = 'sans',
+                       clickAction = MyClickScript)
         })
       },
       1:num_tabs)
+      
+      
+      Map(function(i) {
+        output[[paste0('download_net',i)]] <- downloadHandler(
+        filename = function() {
+          name = sprintf("%s_net_%d_adjmat.csv", input$gene, i)
+        },
+        content = function(file) {
+          write.table(adjmat[[i]], file = file, append = FALSE, quote = TRUE, sep = ',',
+                      eol = "\r\n", na = "NA", dec = ".", row.names = T,
+                      col.names = NA, qmethod = c("escape", "double"),
+                      fileEncoding = "")
+        })
+      },
+      1:num_tabs)
+      
       
       
       Map(function(i) {
