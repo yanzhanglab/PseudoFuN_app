@@ -105,9 +105,9 @@ function(input, output, session) {
           g[[i]]$nodes$size = nodesize
           MyClickScript <- ''
           MyClickScript <- 'var split = d.name.split(": ");
-                            var genename = split[1];
+                            var genename = split[2].substr(0,15);
                             if (genename.length > 0){
-                                window.open("https://www.genecards.org/cgi-bin/carddisp.pl?gene="+genename, "_blank");
+                                window.open("https://www.genecards.org/Search/Keyword?queryString="+genename, "_blank");
                             }
                             else{
                                 alert(d.name + " doesn\'t contain any gene symbol!");
