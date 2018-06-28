@@ -82,6 +82,7 @@ function(input, output, session) {
         )
       }
       removeModal()
+      
       Map(function(i) {
         print(paste0('net',i))
         output[[paste0('net',i)]] <- renderForceNetwork({
@@ -110,13 +111,13 @@ function(input, output, session) {
           g[[i]]$nodes$size = nodesize
           MyClickScript <- ''
           MyClickScript <- 'var split = d.name.split(": ");
-                            var genename = split[2].substr(0,15);
-                            if (genename.length > 0){
-                                window.open("https://www.genecards.org/Search/Keyword?queryString="+genename, "_blank");
-                            }
-                            else{
-                                alert(d.name + " doesn\'t contain any gene symbol!");
-                            }'
+          var genename = split[2].substr(0,15);
+          if (genename.length > 0){
+          window.open("https://www.genecards.org/Search/Keyword?queryString="+genename, "_blank");
+          }
+          else{
+          alert(d.name + " doesn\'t contain any gene symbol!");
+          }'
           forceNetwork(Links = g[[i]]$links, Nodes=g[[i]]$nodes,
                        Source = 'source', Target = 'target', NodeID = 'name',
                        Nodesize = 'size', opacity = 1,
@@ -125,7 +126,6 @@ function(input, output, session) {
         })
       },
       1:num_tabs)
-      
       
       Map(function(i) {
         output[[paste0('download_net',i)]] <- downloadHandler(
@@ -190,8 +190,8 @@ function(input, output, session) {
           session$sendCustomMessage("myCallbackHandler", "tab_TCGA_Expression")
         })
       }, 1:num_tabs)
-    
-    
+      
+      
       Map(function(i) {
         print(num_tabs)
         observeEvent(input[[paste0('circos',i)]],{
