@@ -106,10 +106,44 @@ navbarPage(
            ) # end of sidebarLayout
   ),
   tabPanel("TCGA Expression",
-           h3("TCGA expression panel")
            # possible cancers for new panel are below
            # Any of the strings in the list below will work as input for tcga_cancer_type in the expr_analysis function
            # choices = list("ACC","BLCA","BRCA","CESC","CHOL","COAD","DLBC","ESCA","GBM","HNSC","KICH","KIRC","KIRP","LGG","LIHC","LUAD","LUSC","MESO","OV","PCPG","PRAD","READ","SARC","SKCM","STAD","TGCT","THCA","THYM","UCEC","UCS","UVM")
+           sidebarLayout(
+             position = "left",
+             sidebarPanel(
+               width = 3,
+               h4("TCGA Cancer Selection", style="color: STEELBLUE"),
+               helpText("This is TCGA Cancer Selection Panel."),
+               selectInput(inputId = "TCGA_cancer", label = "TCGA Cancers",
+                           choices = list("ACC","BLCA","BRCA","CESC","CHOL","COAD","DLBC","ESCA","GBM","HNSC","KICH","KIRC","KIRP","LGG","LIHC","LUAD","LUSC","MESO","OV","PCPG","PRAD","READ","SARC","SKCM","STAD","TGCT","THCA","THYM","UCEC","UCS","UVM"),
+                           selected = "BRCA", multiple = FALSE),
+               actionButton("action3", "Confirm", style="color: WHITE; background-color: DODGERBLUE")
+               
+               
+             ),
+             mainPanel(
+               h2("TCGA Expression Panel", style="color: STEELBLUE; font-size: 22px"),
+               fluidRow(
+                 column(6, h4("Normal Heatmap", style="color: STEELBLUE")),
+                 column(6, h4("Tumor Heatmap", style="color: STEELBLUE"))
+               ),
+               fluidRow(
+                 column(6, plotOutput("normal_heatmap", width = 500, height = 400)),
+                 column(6, plotOutput("tumor_heatmap", width = 500, height = 400))
+               ),
+               h4("Boxplot of Expression Values", style="color: STEELBLUE"),
+               plotOutput("pseudo_boxplot", width = 1200, height = 500),
+               fluidRow(
+                 column(7, h4("Normal", style="color: STEELBLUE")),
+                 column(5, h4("Download All Data", style="color: STEELBLUE"))
+               ),
+               fluidRow(
+                 column(7, plotOutput("correlation_plot", width = 600, height = 600)),
+                 column(5, downloadButton('download_TCGA_exp', 'Download'))
+               )
+             ) # end of mainPanel
+           ) # end of sidebarLayout
   ),
   tabPanel("Read Me",
            # fluidRow(
@@ -156,14 +190,17 @@ navbarPage(
     tags$script(HTML("(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
                      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
                      })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-                     
                      ga('create', 'UA-113406500-2', 'auto');
                      ga('send', 'pageview');")),
     tags$script('Shiny.addCustomMessageHandler("myCallbackHandler",
                 function(typeMessage) {console.log(typeMessage)
                 if(typeMessage == "tab_circos"){
-                console.log("Go to Circos Plot panel.");
+                  console.log("Go to Circos Plot panel.");
                 $("a:contains(Circos Plot)").click();
+                }
+                if(typeMessage == "tab_TCGA_Expression"){
+                  console.log("Go to TCGA Expression panel.");
+                $("a:contains(TCGA Expression)").click();
                 }
                 });'),
     tags$script(HTML("document.title = 'PseudoFuN DB Search';"))# rename the title by JS

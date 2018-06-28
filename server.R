@@ -4,6 +4,9 @@ source('helpers.R')
 source('circos.R')
 library(DT)
 library(circlize)
+library(ggplot2)
+library(reshape2)
+
 
 # Define server logic required to draw a histogram ----
 function(input, output, session) {
@@ -12,6 +15,7 @@ function(input, output, session) {
   adjmat <<- NULL
   g.circos <<- NULL
   tabs.list <<- NULL
+  active_net <<- NULL # the current active network, integer value.
   load("data/annot.Rdata")
   load("data/UCSC_hg19_refGene_20180330.Rdata") # varname: hg19
   load("data/UCSC_hg38_refGene_20180330.Rdata") # varname: hg38
@@ -70,6 +74,7 @@ function(input, output, session) {
                                  style="color: STEELBLUE; font-size: 22px"),
                                  forceNetworkOutput(paste0('net',i)),
                                  actionButton(paste0('circos',i), "Circos Plot", style="color: WHITE; background-color: #FFC300"),
+                                 actionButton(paste0('TCGA_expression_',i), "TCGA Expression", style="color: WHITE; background-color: #ff4ce4"),
                                  downloadButton(paste0('download_net',i), 'Download Adjacency Matrix'),
                                  helpText("The elements in adjacency matrix indicating the similarity between each genes."),
                                  br(),br()
@@ -124,20 +129,69 @@ function(input, output, session) {
       
       Map(function(i) {
         output[[paste0('download_net',i)]] <- downloadHandler(
-        filename = function() {
-          name = sprintf("%s_net_%d_adjmat.csv", input$gene, i)
-        },
-        content = function(file) {
-          write.table(adjmat[[i]], file = file, append = FALSE, quote = TRUE, sep = ',',
-                      eol = "\r\n", na = "NA", dec = ".", row.names = T,
-                      col.names = NA, qmethod = c("escape", "double"),
-                      fileEncoding = "")
-        })
+          filename = function() {
+            name = sprintf("%s_net_%d_adjmat.csv", input$gene, i)
+          },
+          content = function(file) {
+            write.table(adjmat[[i]], file = file, append = FALSE, quote = TRUE, sep = ',',
+                        eol = "\r\n", na = "NA", dec = ".", row.names = T,
+                        col.names = NA, qmethod = c("escape", "double"),
+                        fileEncoding = "")
+          })
       },
       1:num_tabs)
       
       
-      
+      Map(function(i) {
+        print(num_tabs)
+        observeEvent(input[[paste0('TCGA_expression_',i)]],{
+          active_net <<- i
+          smartModal(error=F, title = "Calculating", content = "Calculating TCGA Expression ...")
+          expr_analysis(g[[i]], input$TCGA_cancer)
+          output$normal_heatmap <- renderPlot({
+            order = heatmap(Cn)$rowInd
+            Cn.reorder = Cn[,order]
+            Cn.reorder = Cn.reorder[order,]
+            Cn.melt = melt(Cn.reorder)
+            ggplot(Cn.melt, aes(Var1, Var2, value))+
+              geom_tile(aes(fill = value), color = "white") +
+              scale_fill_gradient2(low = "red", mid = "orange", high = "white") +
+              ylab("") +
+              xlab("") +
+              theme(legend.title = element_text(size = 12),
+                    legend.text = element_text(size = 10),
+                    plot.title = element_text(size=16),
+                    axis.title=element_text(size=14,face="bold"),
+                    axis.text.x = element_text(size=12,angle = 45, hjust = 1),
+                    axis.text.y = element_text(size=12)) +
+              labs(fill = "Expression level")
+          })
+          output$tumor_heatmap <- renderPlot({
+            order = heatmap(Ct)$rowInd
+            Ct.reorder = Ct[,order]
+            Ct.reorder = Ct.reorder[order,]
+            Ct.melt = melt(Ct.reorder)
+            ggplot(Ct.melt, aes(Var1, Var2, value))+
+              geom_tile(aes(fill = value), color = "white") +
+              scale_fill_gradient2(low = "red", mid = "orange", high = "white") +
+              ylab("") +
+              xlab("") +
+              theme(legend.title = element_text(size = 12),
+                    legend.text = element_text(size = 10),
+                    plot.title = element_text(size=16),
+                    axis.title=element_text(size=14,face="bold"),
+                    axis.text.x = element_text(size=12,angle = 45, hjust = 1),
+                    axis.text.y = element_text(size=12)) +
+              labs(fill = "Expression level")
+          })
+          output$pseudo_boxplot <- renderPlot({fig_expr_box})
+          output$correlation_plot <- renderPlot({fig_miR_scatter})
+          removeModal()
+          session$sendCustomMessage("myCallbackHandler", "tab_TCGA_Expression")
+        })
+      }, 1:num_tabs)
+    
+    
       Map(function(i) {
         print(num_tabs)
         observeEvent(input[[paste0('circos',i)]],{
@@ -197,6 +251,65 @@ function(input, output, session) {
       1:num_tabs)
     }
   })
+  
+  
+  output$download_TCGA_exp <- downloadHandler(
+    filename = 'Gene_Mir_expr_results.zip',
+    content = function(fname) {
+      separator = ','
+      fs <- c('Etcga.csv', 'miR_gene_cor.csv')
+      write.table(Etcga, file = fs[1], sep = separator, col.names = NA)
+      write.table(miR_gene_cor, file = fs[2], sep = separator, col.names = NA)
+      zip(zipfile=fname, files=fs)
+      if(file.exists(paste0(fname, ".zip"))) {file.rename(paste0(fname, ".zip"), fname)}
+    },
+    contentType = "application/zip"
+  )
+  
+  observeEvent(input$action3,{
+    smartModal(error=F, title = "Updating", content = "Updating TCGA Expression ...")
+    expr_analysis(g[[active_net]], input$TCGA_cancer)
+    output$normal_heatmap <- renderPlot({
+      order = heatmap(Cn)$rowInd
+      Cn.reorder = Cn[,order]
+      Cn.reorder = Cn.reorder[order,]
+      Cn.melt = melt(Cn.reorder)
+      ggplot(Cn.melt, aes(Var1, Var2, value))+
+        geom_tile(aes(fill = value), color = "white") +
+        scale_fill_gradient2(low = "red", mid = "orange", high = "white") +
+        ylab("") +
+        xlab("") +
+        theme(legend.title = element_text(size = 12),
+              legend.text = element_text(size = 10),
+              plot.title = element_text(size=16),
+              axis.title=element_text(size=14,face="bold"),
+              axis.text.x = element_text(size=12,angle = 45, hjust = 1),
+              axis.text.y = element_text(size=12)) +
+        labs(fill = "Expression level")
+    })
+    output$tumor_heatmap <- renderPlot({
+      order = heatmap(Ct)$rowInd
+      Ct.reorder = Ct[,order]
+      Ct.reorder = Ct.reorder[order,]
+      Ct.melt = melt(Ct.reorder)
+      ggplot(Ct.melt, aes(Var1, Var2, value))+
+        geom_tile(aes(fill = value), color = "white") +
+        scale_fill_gradient2(low = "red", mid = "orange", high = "white") +
+        ylab("") +
+        xlab("") +
+        theme(legend.title = element_text(size = 12),
+              legend.text = element_text(size = 10),
+              plot.title = element_text(size=16),
+              axis.title=element_text(size=14,face="bold"),
+              axis.text.x = element_text(size=12,angle = 45, hjust = 1),
+              axis.text.y = element_text(size=12)) +
+        labs(fill = "Expression level")
+    })
+    output$pseudo_boxplot <- renderPlot({fig_expr_box})
+    output$correlation_plot <- renderPlot({fig_miR_scatter})
+    removeModal()
+  })
+  
   
   observeEvent(input$action2,{
     print(g.circos$nodes$name)

@@ -25,6 +25,9 @@ library('igraph')
 library('networkD3')
 library('topGO')
 library('org.Hs.eg.db')
+library(reshape2)
+library(ggplot2)
+library(ggrepel)
 
 
 letters_only <- function(x) !grepl("[^A-Za-z]", x)
@@ -237,7 +240,7 @@ expr_analysis <-function(g,tcga_cancer_type){
   exprP = readRDS(paste0("data/dreamBase_rds_pseudo/TCGA_",tcga_cancer_type,".rds"))
   miR_cor = readRDS(paste0("data/miR-gene_rds/",tcga_cancer_type,"-TP.rds"))
   
-  nodes <- g[[1]]$nodes$name
+  nodes <- g$nodes$name
   node.mat <- matrix(unlist(strsplit(as.character(nodes),': ')),ncol=3,byrow=TRUE)
   Eg = exprG[unique(node.mat[node.mat[,1]=="Gene",2],na.rm=TRUE),]
   grnames = row.names(Eg)[row.names(Eg)!="NA"]
@@ -247,8 +250,8 @@ expr_analysis <-function(g,tcga_cancer_type){
   if(length(grnames)<2){Eg = t(as.matrix(Eg))}
   row.names(Eg) = grnames
   Ep = exprP[unique(node.mat[node.mat[,1]=="Pseudogene",2],na.rm=TRUE),]
+  prnames = row.names(Ep)[row.names(Ep)!="NA"]
   if(length(prnames)>0){
-    prnames = row.names(Ep)[row.names(Ep)!="NA"]
     Ep = Ep[prnames,]
     Ep = apply(Ep,2,as.numeric)
     if(length(prnames)<2){Ep = t(as.matrix(Ep))}
@@ -278,28 +281,48 @@ expr_analysis <-function(g,tcga_cancer_type){
     Ctumor = as.numeric(substr(cnames,14,16))<10;
     Et = Etcga[,Ctumor]
     En = Etcga[,!Ctumor]
-    Ct = cor(log2(t(Et)+1))
-    Cn = cor(log2(t(En)+1))
-    Ct[is.na(Ct)] = 0;
-    Cn[is.na(Cn)] = 0;
+    Ct <<- cor(log2(t(Et)+1))
+    Cn <<- cor(log2(t(En)+1))
+    Ct[is.na(Ct)] <<- 0;
+    Cn[is.na(Cn)] <<- 0;
     E.df = melt(Etcga)
     E.df$Var1 = as.character(E.df$Var1)
-    Disease = ifelse(as.numeric(substr(E.df$Var2,14,16))<10,"tumor","normal");
-    genes = unique(E.df$Var1);
-    for(gene in genes){
-      tmp = t.test(E.df[E.df$Var1==gene,"value"]~Disease[E.df$Var1==gene])
-      E.df[E.df$Var1==gene,"Var1"] = paste0(gene,"\n(pval=",formatC(tmp$p.value, format = "e", digits = 2),")")
+    Disease = ifelse(as.numeric(substr(E.df$Var2,14,16))<10,"tumor","normal")
+    genes = unique(E.df$Var1)
+    if (length(unique(Disease)) > 1){
+      smartModal(error=F, title = "Warning", content = "There's only one group (tumor) in current TCGA dataset. Normal heatmap may not show up.")
+      for(gene in genes){
+        tmp = t.test(E.df[E.df$Var1==gene,"value"]~Disease[E.df$Var1==gene])
+        E.df[E.df$Var1==gene,"Var1"] = paste0(gene,"\n(pval=",formatC(tmp$p.value, format = "e", digits = 2),")")
+      }
     }
-    fig_expr_box = ggplot(aes(y = log2(value+1), x = as.factor(Var1), fill = Disease), data = E.df) + geom_boxplot() +labs(x="",y="Norm Counts (log2)")
+    fig_expr_box <<- ggplot(aes(y = log2(value+1),x = as.factor(Var1), fill = Disease), data = E.df) +
+                            geom_boxplot() +labs(x="",y="Norm Counts (log2)") +
+                            theme_bw() +
+                            theme(legend.title = element_text(size = 12),
+                                  legend.text = element_text(size = 10),
+                                  axis.title=element_text(size=14,face="bold"),
+                                  axis.text.x = element_text(size=12,angle = 45, hjust = 1),
+                                  axis.text.y = element_text(size=12))
+                            
   }else{
     Ct <<- NULL;
     Cn <<- NULL;
     fig_expr_box <<- NULL;
   }
   
-  miR_gene_cor = miR_cor[miR_cor$Gene %in% genes,]
+  miR_gene_cor <<- miR_cor[miR_cor$Gene %in% genes,]
   if(dim(miR_gene_cor)[1]>0){
-    fig_miR_scatter = ggplot(aes(y=-Corr,x=as.factor(Gene),label=Mir),data=miR_gene_cor) + geom_point() + geom_text_repel() + labs(x="",y="Correlation (negative)")
+    fig_miR_scatter <<- ggplot(aes(y=Corr,x=as.factor(Gene),label=Mir),data=miR_gene_cor) +
+                              geom_point(size = 3) + geom_text_repel() +
+                              labs(x="", y="Correlation") +
+                              scale_y_continuous(trans = "reverse") +
+                              theme_bw() +
+                              theme(legend.title = element_text(size = 12),
+                                    legend.text = element_text(size = 10),
+                                    axis.title=element_text(size=14,face="bold"),
+                                    axis.text.x = element_text(size=12,angle = 45, hjust = 1),
+                                    axis.text.y = element_text(size=12))
   }else{
     miR_gene_cor <<- NULL;
   }
