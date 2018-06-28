@@ -105,6 +105,12 @@ navbarPage(
              ) # end of mainPanel
            ) # end of sidebarLayout
   ),
+  tabPanel("TCGA Expression",
+           h3("TCGA expression panel")
+           # possible cancers for new panel are below
+           # Any of the strings in the list below will work as input for tcga_cancer_type in the expr_analysis function
+           # choices = list("ACC","BLCA","BRCA","CESC","CHOL","COAD","DLBC","ESCA","GBM","HNSC","KICH","KIRC","KIRP","LGG","LIHC","LUAD","LUSC","MESO","OV","PCPG","PRAD","READ","SARC","SKCM","STAD","TGCT","THCA","THYM","UCEC","UCS","UVM")
+  ),
   tabPanel("Read Me",
            # fluidRow(
            #   column(width = 8, offset = 1,

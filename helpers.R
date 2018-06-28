@@ -232,6 +232,79 @@ num_networks <- function(gene,dataset,annot){
   return(length(pgAmats))
 }
 
+expr_analysis <-function(g,tcga_cancer_type){
+  exprG = readRDS(paste0("data/TCGA_rds_gene/",tcga_cancer_type,".rds"))
+  exprP = readRDS(paste0("data/dreamBase_rds_pseudo/TCGA_",tcga_cancer_type,".rds"))
+  miR_cor = readRDS(paste0("data/miR-gene_rds/",tcga_cancer_type,"-TP.rds"))
+  
+  nodes <- g[[1]]$nodes$name
+  node.mat <- matrix(unlist(strsplit(as.character(nodes),': ')),ncol=3,byrow=TRUE)
+  Eg = exprG[unique(node.mat[node.mat[,1]=="Gene",2],na.rm=TRUE),]
+  grnames = row.names(Eg)[row.names(Eg)!="NA"]
+  if(length(grnames)>0)
+    Eg = Eg[grnames,]
+  Eg = apply(Eg,2,as.numeric)
+  if(length(grnames)<2){Eg = t(as.matrix(Eg))}
+  row.names(Eg) = grnames
+  Ep = exprP[unique(node.mat[node.mat[,1]=="Pseudogene",2],na.rm=TRUE),]
+  if(length(prnames)>0){
+    prnames = row.names(Ep)[row.names(Ep)!="NA"]
+    Ep = Ep[prnames,]
+    Ep = apply(Ep,2,as.numeric)
+    if(length(prnames)<2){Ep = t(as.matrix(Ep))}
+    row.names(Ep) = prnames
+  }
+  cnames = intersect(colnames(Eg),colnames(Ep))
+  if(length(grnames)>0){
+    Eg = Eg[,cnames]
+    if(length(grnames)<2){Eg = t(as.matrix(Eg))}
+    row.names(Eg) = grnames
+  }
+  if(length(prnames)>0){
+    Ep = Ep[,cnames]
+    if(length(prnames)<2){Ep = t(as.matrix(Ep))}
+    row.names(Ep) = prnames
+  }
+  if(length(prnames)>0 & length(grnames)>0){
+    Etcga <<- rbind(Eg,Ep)
+  }else if(length(grnames)>0){
+    Etcga <<- Eg
+  }else if(length(prnames)>0){
+    Etcga <<- Ep
+  }else{
+    Etcga <<- NULL
+  }
+  if(!is.null(Etcga)){
+    Ctumor = as.numeric(substr(cnames,14,16))<10;
+    Et = Etcga[,Ctumor]
+    En = Etcga[,!Ctumor]
+    Ct = cor(log2(t(Et)+1))
+    Cn = cor(log2(t(En)+1))
+    Ct[is.na(Ct)] = 0;
+    Cn[is.na(Cn)] = 0;
+    E.df = melt(Etcga)
+    E.df$Var1 = as.character(E.df$Var1)
+    Disease = ifelse(as.numeric(substr(E.df$Var2,14,16))<10,"tumor","normal");
+    genes = unique(E.df$Var1);
+    for(gene in genes){
+      tmp = t.test(E.df[E.df$Var1==gene,"value"]~Disease[E.df$Var1==gene])
+      E.df[E.df$Var1==gene,"Var1"] = paste0(gene,"\n(pval=",formatC(tmp$p.value, format = "e", digits = 2),")")
+    }
+    fig_expr_box = ggplot(aes(y = log2(value+1), x = as.factor(Var1), fill = Disease), data = E.df) + geom_boxplot() +labs(x="",y="Norm Counts (log2)")
+  }else{
+    Ct <<- NULL;
+    Cn <<- NULL;
+    fig_expr_box <<- NULL;
+  }
+  
+  miR_gene_cor = miR_cor[miR_cor$Gene %in% genes,]
+  if(dim(miR_gene_cor)[1]>0){
+    fig_miR_scatter = ggplot(aes(y=-Corr,x=as.factor(Gene),label=Mir),data=miR_gene_cor) + geom_point() + geom_text_repel() + labs(x="",y="Correlation (negative)")
+  }else{
+    miR_gene_cor <<- NULL;
+  }
+}
+
 search2GOtbl <- function(gene,go,dataset,annot,inc0,
                          run.ks, run.ks.elim){
   if(go != "Do Not Run GO Analysis"){
