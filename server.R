@@ -160,8 +160,7 @@ function(input, output, session) {
       1:num_tabs)
       
       
-      for (i in 1:num_tabs) {
-        print(num_tabs)
+      Map(function(i) {
         observeEvent(input[[paste0('TCGA_expression_',current.gene,'_',current.db,'_',i)]],{
           active_net <<- i
           current.cancer <<- input$TCGA_cancer
@@ -224,11 +223,11 @@ function(input, output, session) {
           output$correlation_plot <- renderPlot({fig_miR_scatter})
           session$sendCustomMessage("myCallbackHandler", "tab_TCGA_Expression")
         })
-      }
+      },
+      1:num_tabs)
       
       
       Map(function(i) {
-        print(num_tabs)
         observeEvent(input[[paste0('circos_',current.gene,'_',current.db,'_',i)]],{
           smartModal(error=F, title = "Calculating", content = "Generating Circos Plot ...")
           g.circos <<- g[[i]]
