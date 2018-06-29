@@ -10,7 +10,7 @@ library(reshape2)
 
 # Define server logic required to draw a histogram ----
 function(input, output, session) {
-  num_tabs <<- 0
+  num_tabs <<- NULL
   g <<- NULL
   adjmat <<- NULL
   g.circos <<- NULL
@@ -88,14 +88,15 @@ function(input, output, session) {
                                  h2(paste0('Network ',i),
                                  style="color: STEELBLUE; font-size: 22px"),
                                  forceNetworkOutput(paste0('net',i)),
-                                 actionButton(paste0('circos_',input$gene,'_',input$db,'_',i),
+                                 actionButton(paste0('circos_',current.gene,'_',current.db,'_',i),
                                               "Circos Plot", style="color: WHITE; background-color: #FFC300"),
-                                 actionButton(paste0('TCGA_expression_',input$gene,'_',input$db,'_',i),
+                                 actionButton(paste0('TCGA_expression_',current.gene,'_',current.db,'_',i),
                                               "TCGA Expression", style="color: WHITE; background-color: #ff4ce4"),
                                  downloadButton(paste0('download_net',i), 'Download Adjacency Matrix'),
                                  helpText("The elements in adjacency matrix indicating the similarity between each genes."),
                                  br(),br()
-                  )
+                  ),
+                  session = getDefaultReactiveDomain()
         )
       }
       removeModal()
@@ -105,14 +106,14 @@ function(input, output, session) {
         output[[paste0('net',i)]] <- renderForceNetwork({
           print("render force map")
           smartModal(error=F, title = "Processing", content = "Initializing Force Directed Networks ...")
-          t2 <- try(g[[i]] <<- search2network(input$gene,dataset,annot,i))
+          t2 <- try(g[[i]] <<- search2network(current.gene,dataset,annot,i))
           if("try-error" %in% class(t2)) {
             removeModal()
             print("Error occured")
             smartModal(error=T, title = "Error occured", content = "Searching Network Failed. Try to enter a valid gene.")
             return()
           }
-          t2 <- try(adjmat[[i]] <<- search2adjmat(input$gene,dataset,annot,i))
+          t2 <- try(adjmat[[i]] <<- search2adjmat(current.gene,dataset,annot,i))
           if("try-error" %in% class(t2)) {
             removeModal()
             print("Error occured")
@@ -120,8 +121,8 @@ function(input, output, session) {
             return()
           }
           removeModal()
-          mapped_genes <- map_genes(input$gene,annot);
-          message(input$gene)
+          mapped_genes <- map_genes(current.gene,annot);
+          message(current.gene)
           targetposition = match(mapped_genes, substr(sub(".*: ", "", g[[i]]$nodes$name),1,15))
           nodesize = rep(1,length(g[[i]]$nodes$name))
           nodesize[targetposition] = 50
@@ -159,37 +160,48 @@ function(input, output, session) {
       1:num_tabs)
       
       
-      Map(function(i) {
+      for (i in 1:num_tabs) {
         print(num_tabs)
-        observeEvent(input[[paste0('TCGA_expression_',input$gene,'_',input$db,'_',i)]],{
+        observeEvent(input[[paste0('TCGA_expression_',current.gene,'_',current.db,'_',i)]],{
           active_net <<- i
-          current.gene <<- input$gene
-          current.db <<- input$db
           current.cancer <<- input$TCGA_cancer
           output$TCGA_Expression_gene_db_cancer_name <- renderUI({
             h2(sprintf("Gene: %s; Database: %s; Cancer: %s.", current.gene, current.db, current.cancer),
                style="color: grey; font-size: 18px; font-family: Courier")
           })
           smartModal(error=F, title = "Calculating", content = "Calculating TCGA Expression ...")
-          expr_analysis(g[[i]], input$TCGA_cancer)
-          output$normal_heatmap <- renderPlot({
-            order = heatmap(Cn)$rowInd
-            Cn.reorder = Cn[,order]
-            Cn.reorder = Cn.reorder[order,]
-            Cn.melt = melt(Cn.reorder)
-            ggplot(Cn.melt, aes(Var1, Var2, value))+
-              geom_tile(aes(fill = value), color = "white") +
-              scale_fill_gradient2(low = "blue", mid = "white", high = "yellow") +
-              ylab("") +
-              xlab("") +
-              theme(legend.title = element_text(size = 12),
-                    legend.text = element_text(size = 10),
-                    plot.title = element_text(size=16),
-                    axis.title=element_text(size=14,face="bold"),
-                    axis.text.x = element_text(size=12,angle = 45, hjust = 1),
-                    axis.text.y = element_text(size=12)) +
-              labs(fill = "Expression level")
-          })
+          print(sprintf("Gene: %s; Database: %s; Cancer: %s.", current.gene, current.db, current.cancer))
+          expr_analysis(g[[i]], input$TCGA_cancer, session)
+          if (is.null(Cn)){
+            output$normal_heatmap = NULL
+            output$normal_heatmap <- renderPlot({
+              par(mar = c(0,0,0,0))
+              plot(c(0, 1), c(0, 1), ann = F, bty = 'n', type = 'n', xaxt = 'n', yaxt = 'n')
+              text(x = 0.5, y = 0.5, paste("All disease type are tumor.\n",
+                                           "No normal sample available."), 
+                   cex = 1.6, col = "black")
+            })
+          }
+          else{
+            output$normal_heatmap <- renderPlot({
+              order = heatmap(Cn)$rowInd
+              Cn.reorder = Cn[,order]
+              Cn.reorder = Cn.reorder[order,]
+              Cn.melt = melt(Cn.reorder)
+              ggplot(Cn.melt, aes(Var1, Var2, value))+
+                geom_tile(aes(fill = value), color = "white") +
+                scale_fill_gradient2(low = "blue", mid = "white", high = "yellow") +
+                ylab("") +
+                xlab("") +
+                theme(legend.title = element_text(size = 12),
+                      legend.text = element_text(size = 10),
+                      plot.title = element_text(size=16),
+                      axis.title=element_text(size=14,face="bold"),
+                      axis.text.x = element_text(size=12,angle = 45, hjust = 1),
+                      axis.text.y = element_text(size=12)) +
+                labs(fill = "Expression level")
+            })
+          }
           output$tumor_heatmap <- renderPlot({
             order = heatmap(Ct)$rowInd
             Ct.reorder = Ct[,order]
@@ -210,15 +222,14 @@ function(input, output, session) {
           })
           output$pseudo_boxplot <- renderPlot({fig_expr_box})
           output$correlation_plot <- renderPlot({fig_miR_scatter})
-          removeModal()
           session$sendCustomMessage("myCallbackHandler", "tab_TCGA_Expression")
         })
-      }, 1:num_tabs)
+      }
       
       
       Map(function(i) {
         print(num_tabs)
-        observeEvent(input[[paste0('circos_',input$gene,'_',input$db,'_',i)]],{
+        observeEvent(input[[paste0('circos_',current.gene,'_',current.db,'_',i)]],{
           smartModal(error=F, title = "Calculating", content = "Generating Circos Plot ...")
           g.circos <<- g[[i]]
           print(paste0('circos',i))
@@ -299,25 +310,37 @@ function(input, output, session) {
       h2(sprintf("Gene: %s; Database: %s; Cancer: %s.", current.gene, current.db, current.cancer),
          style="color: grey; font-size: 18px; font-family: Courier")
     })
-    expr_analysis(g[[active_net]], input$TCGA_cancer)
-    output$normal_heatmap <- renderPlot({
-      order = heatmap(Cn)$rowInd
-      Cn.reorder = Cn[,order]
-      Cn.reorder = Cn.reorder[order,]
-      Cn.melt = melt(Cn.reorder)
-      ggplot(Cn.melt, aes(Var1, Var2, value))+
-        geom_tile(aes(fill = value), color = "white") +
-        scale_fill_gradient2(low = "blue", mid = "white", high = "yellow") +
-        ylab("") +
-        xlab("") +
-        theme(legend.title = element_text(size = 12),
-              legend.text = element_text(size = 10),
-              plot.title = element_text(size=16),
-              axis.title=element_text(size=14,face="bold"),
-              axis.text.x = element_text(size=12,angle = 45, hjust = 1),
-              axis.text.y = element_text(size=12)) +
-        labs(fill = "Expression level")
-    })
+    expr_analysis(g[[active_net]], input$TCGA_cancer, session)
+    if (is.null(Cn)){
+      output$normal_heatmap = NULL
+      output$normal_heatmap <- renderPlot({
+        par(mar = c(0,0,0,0))
+        plot(c(0, 1), c(0, 1), ann = F, bty = 'n', type = 'n', xaxt = 'n', yaxt = 'n')
+        text(x = 0.5, y = 0.5, paste("All disease type are tumor.\n",
+                                     "No normal sample available."), 
+             cex = 1.6, col = "black")
+      })
+    }
+    else{
+      output$normal_heatmap <- renderPlot({
+        order = heatmap(Cn)$rowInd
+        Cn.reorder = Cn[,order]
+        Cn.reorder = Cn.reorder[order,]
+        Cn.melt = melt(Cn.reorder)
+        ggplot(Cn.melt, aes(Var1, Var2, value))+
+          geom_tile(aes(fill = value), color = "white") +
+          scale_fill_gradient2(low = "blue", mid = "white", high = "yellow") +
+          ylab("") +
+          xlab("") +
+          theme(legend.title = element_text(size = 12),
+                legend.text = element_text(size = 10),
+                plot.title = element_text(size=16),
+                axis.title=element_text(size=14,face="bold"),
+                axis.text.x = element_text(size=12,angle = 45, hjust = 1),
+                axis.text.y = element_text(size=12)) +
+          labs(fill = "Expression level")
+      })
+    }
     output$tumor_heatmap <- renderPlot({
       order = heatmap(Ct)$rowInd
       Ct.reorder = Ct[,order]
@@ -338,7 +361,6 @@ function(input, output, session) {
     })
     output$pseudo_boxplot <- renderPlot({fig_expr_box})
     output$correlation_plot <- renderPlot({fig_miR_scatter})
-    removeModal()
   })
   
   

@@ -235,7 +235,7 @@ num_networks <- function(gene,dataset,annot){
   return(length(pgAmats))
 }
 
-expr_analysis <-function(g,tcga_cancer_type){
+expr_analysis <-function(g, tcga_cancer_type, session){
   exprG = readRDS(paste0("data/TCGA_rds_gene/",tcga_cancer_type,".rds"))
   exprP = readRDS(paste0("data/dreamBase_rds_pseudo/TCGA_",tcga_cancer_type,".rds"))
   #message(dim(exprG))
@@ -275,42 +275,42 @@ expr_analysis <-function(g,tcga_cancer_type){
     row.names(Ep) = prnames
   }
   if(length(prnames)>0 & length(grnames)>0){
-    Etcga <<- rbind(Eg,Ep)
+    Etcga <- rbind(Eg,Ep)
   }else if(length(grnames)>0){
-    Etcga <<- Eg
+    Etcga <- Eg
   }else if(length(prnames)>0){
-    Etcga <<- Ep
+    Etcga <- Ep
   }else{
-    Etcga <<- NULL
+    Etcga <- NULL
   }
   if(!is.null(Etcga)){
     Ctumor = as.numeric(substr(cnames,14,16))<10;
     if(sum(Ctumor)>0){
       Et = Etcga[,Ctumor]
-      Ct <<- cor(log2(t(Et)+1))
-      Ct[is.na(Ct)] <<- 0;
+      Ct <- cor(log2(t(Et)+1))
+      Ct[is.na(Ct)] <- 0;
     }else{
-      Ct <<- NULL
+      Ct <- NULL
     }
     if(sum(!Ctumor)>0){
       En = Etcga[,!Ctumor]
-      Cn <<- cor(log2(t(En)+1))
-      Cn[is.na(Cn)] <<- 0;
+      Cn <- cor(log2(t(En)+1))
+      Cn[is.na(Cn)] <- 0;
     }else{
-      Cn <<- NULL
+      Cn <- NULL
     }
     E.df = melt(Etcga)
     E.df$Var1 = as.character(E.df$Var1)
     Disease = ifelse(as.numeric(substr(E.df$Var2,14,16))<10,"tumor","normal")
     genes = unique(E.df$Var1)
+    
     if (length(unique(Disease)) > 1){
-      smartModal(error=F, title = "Warning", content = "There's only one group (tumor) in current TCGA dataset. Normal heatmap may not show up.")
       for(gene in genes){
         tmp = t.test(E.df[E.df$Var1==gene,"value"]~Disease[E.df$Var1==gene])
         E.df[E.df$Var1==gene,"Var1"] = paste0(gene,"\n(pval=",formatC(tmp$p.value, format = "e", digits = 2),")")
       }
     }
-    fig_expr_box <<- ggplot(aes(y = log2(value+1),x = as.factor(Var1), fill = Disease), data = E.df) +
+    fig_expr_box <- ggplot(aes(y = log2(value+1),x = as.factor(Var1), fill = Disease), data = E.df) +
                             geom_boxplot() +labs(x="",y="FPKM (log2)") +
                             theme_bw() +
                             theme(legend.title = element_text(size = 12),
@@ -320,14 +320,14 @@ expr_analysis <-function(g,tcga_cancer_type){
                                   axis.text.y = element_text(size=12))
                             
   }else{
-    Ct <<- NULL;
-    Cn <<- NULL;
-    fig_expr_box <<- NULL;
+    Ct <- NULL;
+    Cn <- NULL;
+    fig_expr_box <- NULL;
   }
   
-  miR_gene_cor <<- miR_cor[miR_cor$Gene %in% genes,]
+  miR_gene_cor <- miR_cor[miR_cor$Gene %in% genes,]
   if(dim(miR_gene_cor)[1]>0){
-    fig_miR_scatter <<- ggplot(aes(y=Corr,x=as.factor(Gene),label=Mir),data=miR_gene_cor) +
+    fig_miR_scatter <- ggplot(aes(y=Corr,x=as.factor(Gene),label=Mir),data=miR_gene_cor) +
                               geom_point(size = 3) + geom_text_repel() +
                               labs(x="", y="Correlation") +
                               scale_y_continuous(trans = "reverse") +
@@ -338,7 +338,28 @@ expr_analysis <-function(g,tcga_cancer_type){
                                     axis.text.x = element_text(size=12,angle = 45, hjust = 1),
                                     axis.text.y = element_text(size=12))
   }else{
-    miR_gene_cor <<- NULL;
+    miR_gene_cor <- NULL;
+  }
+  
+  removeModal()
+  
+  if (length(unique(Disease)) == 1){
+    sendSweetAlert(session, title = "Warning", "There's only one group (tumor) in current TCGA dataset. Normal heatmap may not show up.", type = "warning",
+                   btn_labels = "Ok", html = FALSE, closeOnClickOutside = TRUE)
+    Cn <<- NULL
+    Ct <<- Ct
+    fig_expr_box <<- fig_expr_box
+    fig_miR_scatter <<- fig_miR_scatter
+    Etcga <<- Etcga
+    miR_gene_cor <<- miR_gene_cor
+  }
+  else{
+    Cn <<- Cn
+    Ct <<- Ct
+    fig_expr_box <<- fig_expr_box
+    fig_miR_scatter <<- fig_miR_scatter
+    Etcga <<- Etcga
+    miR_gene_cor <<- miR_gene_cor
   }
 }
 
