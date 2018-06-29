@@ -19,4 +19,5 @@ fig_expr_box <- NULL
 fig_miR_scatter <- NULL
 Etcga <- NULL # to be download
 miR_gene_cor <- NULL # to be download
-
+tester1 <<- NULL
+tester2 <<- NULL

@@ -16,7 +16,7 @@ function(input, output, session) {
   g.circos <<- NULL
   tabs.list <<- NULL
   active_net <<- NULL # the current active network, integer value.
-  load("data/annot.Rdata")
+  load("data/annot.RData")
   load("data/UCSC_hg19_refGene_20180330.Rdata") # varname: hg19
   load("data/UCSC_hg38_refGene_20180330.Rdata") # varname: hg38
   annot <<- annot
@@ -155,7 +155,7 @@ function(input, output, session) {
             Cn.melt = melt(Cn.reorder)
             ggplot(Cn.melt, aes(Var1, Var2, value))+
               geom_tile(aes(fill = value), color = "white") +
-              scale_fill_gradient2(low = "red", mid = "orange", high = "white") +
+              scale_fill_gradient2(low = "blue", mid = "white", high = "yellow") +
               ylab("") +
               xlab("") +
               theme(legend.title = element_text(size = 12),
@@ -173,7 +173,7 @@ function(input, output, session) {
             Ct.melt = melt(Ct.reorder)
             ggplot(Ct.melt, aes(Var1, Var2, value))+
               geom_tile(aes(fill = value), color = "white") +
-              scale_fill_gradient2(low = "red", mid = "orange", high = "white") +
+              scale_fill_gradient2(low = "blue", mid = "white", high = "yellow") +
               ylab("") +
               xlab("") +
               theme(legend.title = element_text(size = 12),

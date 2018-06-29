@@ -238,19 +238,25 @@ num_networks <- function(gene,dataset,annot){
 expr_analysis <-function(g,tcga_cancer_type){
   exprG = readRDS(paste0("data/TCGA_rds_gene/",tcga_cancer_type,".rds"))
   exprP = readRDS(paste0("data/dreamBase_rds_pseudo/TCGA_",tcga_cancer_type,".rds"))
+  #message(dim(exprG))
+  #message(dim(exprP))
+  #tester1 <<- exprG
+  #tester2 <<- exprP
   miR_cor = readRDS(paste0("data/miR-gene_rds/",tcga_cancer_type,"-TP.rds"))
   
   nodes <- g$nodes$name
   node.mat <- matrix(unlist(strsplit(as.character(nodes),': ')),ncol=3,byrow=TRUE)
   Eg = exprG[unique(node.mat[node.mat[,1]=="Gene",2],na.rm=TRUE),]
-  grnames = row.names(Eg)[row.names(Eg)!="NA"]
+  grnames = row.names(Eg)[sub("[.].*","",row.names(Eg))!="NA"]
+  #tester1 <<- grnames
   if(length(grnames)>0)
     Eg = Eg[grnames,]
   Eg = apply(Eg,2,as.numeric)
   if(length(grnames)<2){Eg = t(as.matrix(Eg))}
   row.names(Eg) = grnames
+  #Eg = (Eg/colSums(Eg))*1e2
   Ep = exprP[unique(node.mat[node.mat[,1]=="Pseudogene",2],na.rm=TRUE),]
-  prnames = row.names(Ep)[row.names(Ep)!="NA"]
+  prnames = row.names(Ep)[sub("[.].*","",row.names(Ep))!="NA"]
   if(length(prnames)>0){
     Ep = Ep[prnames,]
     Ep = apply(Ep,2,as.numeric)
@@ -279,12 +285,20 @@ expr_analysis <-function(g,tcga_cancer_type){
   }
   if(!is.null(Etcga)){
     Ctumor = as.numeric(substr(cnames,14,16))<10;
-    Et = Etcga[,Ctumor]
-    En = Etcga[,!Ctumor]
-    Ct <<- cor(log2(t(Et)+1))
-    Cn <<- cor(log2(t(En)+1))
-    Ct[is.na(Ct)] <<- 0;
-    Cn[is.na(Cn)] <<- 0;
+    if(sum(Ctumor)>0){
+      Et = Etcga[,Ctumor]
+      Ct <<- cor(log2(t(Et)+1))
+      Ct[is.na(Ct)] <<- 0;
+    }else{
+      Ct <<- NULL
+    }
+    if(sum(!Ctumor)>0){
+      En = Etcga[,!Ctumor]
+      Cn <<- cor(log2(t(En)+1))
+      Cn[is.na(Cn)] <<- 0;
+    }else{
+      Cn <<- NULL
+    }
     E.df = melt(Etcga)
     E.df$Var1 = as.character(E.df$Var1)
     Disease = ifelse(as.numeric(substr(E.df$Var2,14,16))<10,"tumor","normal")
@@ -297,7 +311,7 @@ expr_analysis <-function(g,tcga_cancer_type){
       }
     }
     fig_expr_box <<- ggplot(aes(y = log2(value+1),x = as.factor(Var1), fill = Disease), data = E.df) +
-                            geom_boxplot() +labs(x="",y="Norm Counts (log2)") +
+                            geom_boxplot() +labs(x="",y="FPKM (log2)") +
                             theme_bw() +
                             theme(legend.title = element_text(size = 12),
                                   legend.text = element_text(size = 10),

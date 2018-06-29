@@ -64,6 +64,7 @@ navbarPage(
         tabsetPanel(id = "tabs",
           tabPanel("GO Analysis",
                    h4("GO Analysis (all networks)", style="color: STEELBLUE"),
+                   h4("To view DB search results please select Network tab", style="color: STEELBLUE; font-size: 14px"),
                    DT::dataTableOutput("GOtable"),
                    tags$head(tags$script('// disable download at startup.
                                          $(document).ready(function() {
@@ -98,6 +99,7 @@ navbarPage(
                
              ),
              mainPanel(
+               h2("Please be patient plots may take a few seconds to render.", style="color: STEELBLUE; font-size: 14px"),
                h2("hg38:", style="color: STEELBLUE; font-size: 22px"),
                plotOutput("circos_plot_component_hg38", width = 800, height = 600),
                h2("hg19:", style="color: STEELBLUE; font-size: 22px"),
@@ -106,15 +108,15 @@ navbarPage(
            ) # end of sidebarLayout
   ),
   tabPanel("TCGA Expression",
-           # possible cancers for new panel are below
-           # Any of the strings in the list below will work as input for tcga_cancer_type in the expr_analysis function
-           # choices = list("ACC","BLCA","BRCA","CESC","CHOL","COAD","DLBC","ESCA","GBM","HNSC","KICH","KIRC","KIRP","LGG","LIHC","LUAD","LUSC","MESO","OV","PCPG","PRAD","READ","SARC","SKCM","STAD","TGCT","THCA","THYM","UCEC","UCS","UVM")
            sidebarLayout(
              position = "left",
              sidebarPanel(
                width = 3,
                h4("TCGA Cancer Selection", style="color: STEELBLUE"),
-               helpText("This is TCGA Cancer Selection Panel."),
+               helpText("Please select which cancer to conduct gene expression analysis for the selected network.
+                        If no search has been conducted, please conduct a search using the Search Engine tab.
+                        To conduct the TCGA expression analysis on the search results, the TCGA Expression
+                        button must be selected in your network of interest."),
                selectInput(inputId = "TCGA_cancer", label = "TCGA Cancers",
                            choices = list("ACC","BLCA","BRCA","CESC","CHOL","COAD","DLBC","ESCA","GBM","HNSC","KICH","KIRC","KIRP","LGG","LIHC","LUAD","LUSC","MESO","OV","PCPG","PRAD","READ","SARC","SKCM","STAD","TGCT","THCA","THYM","UCEC","UCS","UVM"),
                            selected = "BRCA", multiple = FALSE),
@@ -124,23 +126,27 @@ navbarPage(
              ),
              mainPanel(
                h2("TCGA Expression Panel", style="color: STEELBLUE; font-size: 22px"),
+               h2("Please be patient plots may take a few seconds to render.", style="color: STEELBLUE; font-size: 14px"),
                fluidRow(
-                 column(6, h4("Normal Heatmap", style="color: STEELBLUE")),
-                 column(6, h4("Tumor Heatmap", style="color: STEELBLUE"))
+                 column(6, h4("Normal Sample Coexpression", style="color: STEELBLUE")),
+                 column(6, h4("Tumor Sample Coexpression", style="color: STEELBLUE"))
                ),
                fluidRow(
                  column(6, plotOutput("normal_heatmap", width = 500, height = 400)),
                  column(6, plotOutput("tumor_heatmap", width = 500, height = 400))
                ),
-               h4("Boxplot of Expression Values", style="color: STEELBLUE"),
+               h4("Differential Expression Tumor vs. Normal", style="color: STEELBLUE"),
                plotOutput("pseudo_boxplot", width = 1200, height = 500),
                fluidRow(
-                 column(7, h4("Normal", style="color: STEELBLUE")),
-                 column(5, h4("Download All Data", style="color: STEELBLUE"))
+                 column(7, h4("Gene and Pseudogene miRNA Associations", style="color: STEELBLUE"))
+                 #column(5, h4("Download Data", style="color: STEELBLUE"))
                ),
                fluidRow(
-                 column(7, plotOutput("correlation_plot", width = 600, height = 600)),
-                 column(5, downloadButton('download_TCGA_exp', 'Download'))
+                 column(7, plotOutput("correlation_plot", width = 600, height = 600))
+                 #column(5, downloadButton('download_TCGA_exp', 'Download'))
+               ),
+               fluidRow(
+                column(5, downloadButton('download_TCGA_exp', 'Download Data'))
                )
              ) # end of mainPanel
            ) # end of sidebarLayout
@@ -172,7 +178,7 @@ navbarPage(
                       alt="IUSM", class="center", style="padding: 30px"),
              style="text-align: center; padding: 20px"
            ),
-           h4("Development Team", style="color: STEELBLUE; padding-bottom: 20px"),
+           h4("Development Team", style="color: STEELBLUE"),
            tags$ul(
              tags$li("Travis Johnson"),
              tags$li("Eric Franz"),

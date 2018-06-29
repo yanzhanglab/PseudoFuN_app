@@ -52,4 +52,15 @@ All of the genes that are contained in the networks identified by the query can 
 back to the genome. These graphs are meant to show if the genes/pseudogenes localize to
 specific regions of the genome and are displayed as a circular plot.
 
+### TCGA mRNA and miRNA Expression analysis
+For each network that is generated, the gene expression information can be displayed for each
+cancer in the TCGA. The gene expression values were taken downloaded from Broad GDAC Firehose
+and the pseudogene expression values were taken from the dreamBase pseudogene quantification
+of TCGA reads (Zheng 2017). The miRNA correlation information was also used from Broad GDAC
+Firebrowse. The  result is that for each network's nodes the tumor sample gene/PseudoGene
+coexpression network, normal sample gene/pseudogene coexpression network, differential gene/pseudogene
+expression between tumor and normal, and miRNA correlation with gene/pseudogenes are displayed
+in the TCGA Expression tab. The gene/pseudogene expression matrix and miRNA correlations
+are also available for download.
+
 This application is still being tested. For any bugs please contact (travis.johnson@osumc.edu).
