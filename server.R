@@ -165,7 +165,7 @@ function(input, output, session) {
           active_net <<- i
           current.cancer <<- input$TCGA_cancer
           output$TCGA_Expression_gene_db_cancer_name <- renderUI({
-            h2(sprintf("Gene: %s; Database: %s; Cancer: %s.", current.gene, current.db, current.cancer),
+            h2(sprintf("Gene: %s; Database: %s; Cancer: %s; Network: %d.", current.gene, current.db, current.cancer, active_net),
                style="color: grey; font-size: 18px; font-family: Courier")
           })
           smartModal(error=F, title = "Calculating", content = "Calculating TCGA Expression ...")
@@ -306,7 +306,7 @@ function(input, output, session) {
     current.db <<- input$db
     current.cancer <<- input$TCGA_cancer
     output$TCGA_Expression_gene_db_cancer_name <- renderUI({
-      h2(sprintf("Gene: %s; Database: %s; Cancer: %s.", current.gene, current.db, current.cancer),
+      h2(sprintf("Gene: %s; Database: %s; Cancer: %s; Network: %d.", current.gene, current.db, current.cancer, active_net),
          style="color: grey; font-size: 18px; font-family: Courier")
     })
     expr_analysis(g[[active_net]], input$TCGA_cancer, session)
