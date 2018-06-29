@@ -31,7 +31,7 @@ function(input, output, session) {
     current.gene <<- input$gene
     current.db <<- input$db
     output$Circos_plot_gene_db_name <- renderUI({
-      h2(sprintf("Gene: %s; Database: %s.", current.gene, current.cancer),
+      h2(sprintf("Gene: %s; Database: %s.", current.gene, current.db),
          style="color: grey; font-size: 18px; font-family: Courier")
     })
     if (length(tabs.list) > 0){
