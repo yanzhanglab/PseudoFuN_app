@@ -16,15 +16,24 @@ function(input, output, session) {
   g.circos <<- NULL
   tabs.list <<- NULL
   active_net <<- NULL # the current active network, integer value.
-  load("data/annot.RData")
+  load("data/annot.Rdata")
   load("data/UCSC_hg19_refGene_20180330.Rdata") # varname: hg19
   load("data/UCSC_hg38_refGene_20180330.Rdata") # varname: hg38
   annot <<- annot
   hg19 <<- hg19
   hg38 <<- hg38
+  current.gene <<- NULL
+  current.db <<- NULL
+  current.cancer <<- NULL
   
   observeEvent(input$action1, {
     dataset <<- load_dataset(input$db)
+    current.gene <<- input$gene
+    current.db <<- input$db
+    output$Circos_plot_gene_db_name <- renderUI({
+      h2(sprintf("Gene: %s; Database: %s.", current.gene, current.cancer),
+         style="color: grey; font-size: 18px; font-family: Courier")
+    })
     if (length(tabs.list) > 0){
       for (i in 1:length(tabs.list)){
         print("remove tabs")
@@ -39,8 +48,14 @@ function(input, output, session) {
     if("try-error" %in% class(t)) {
       removeModal()
       print("Error occured")
-      print(dataset)
       smartModal(error=T, title = "Error occured", content = "Error occured. Try to enter a valid gene.")
+      return()
+    }
+    if(num_tabs == 0) {
+      removeModal()
+      print("Error occured")
+      sendSweetAlert(session, title = "Error occured", sprintf("%s does not return any network in %s. Please try another Gene/Database.",input$gene,input$db), type = "error",
+                     btn_labels = "Ok", html = FALSE, closeOnClickOutside = TRUE)
       return()
     }
     else{
@@ -73,8 +88,10 @@ function(input, output, session) {
                                  h2(paste0('Network ',i),
                                  style="color: STEELBLUE; font-size: 22px"),
                                  forceNetworkOutput(paste0('net',i)),
-                                 actionButton(paste0('circos',i), "Circos Plot", style="color: WHITE; background-color: #FFC300"),
-                                 actionButton(paste0('TCGA_expression_',i), "TCGA Expression", style="color: WHITE; background-color: #ff4ce4"),
+                                 actionButton(paste0('circos_',input$gene,'_',input$db,'_',i),
+                                              "Circos Plot", style="color: WHITE; background-color: #FFC300"),
+                                 actionButton(paste0('TCGA_expression_',input$gene,'_',input$db,'_',i),
+                                              "TCGA Expression", style="color: WHITE; background-color: #ff4ce4"),
                                  downloadButton(paste0('download_net',i), 'Download Adjacency Matrix'),
                                  helpText("The elements in adjacency matrix indicating the similarity between each genes."),
                                  br(),br()
@@ -144,8 +161,15 @@ function(input, output, session) {
       
       Map(function(i) {
         print(num_tabs)
-        observeEvent(input[[paste0('TCGA_expression_',i)]],{
+        observeEvent(input[[paste0('TCGA_expression_',input$gene,'_',input$db,'_',i)]],{
           active_net <<- i
+          current.gene <<- input$gene
+          current.db <<- input$db
+          current.cancer <<- input$TCGA_cancer
+          output$TCGA_Expression_gene_db_cancer_name <- renderUI({
+            h2(sprintf("Gene: %s; Database: %s; Cancer: %s.", current.gene, current.db, current.cancer),
+               style="color: grey; font-size: 18px; font-family: Courier")
+          })
           smartModal(error=F, title = "Calculating", content = "Calculating TCGA Expression ...")
           expr_analysis(g[[i]], input$TCGA_cancer)
           output$normal_heatmap <- renderPlot({
@@ -194,7 +218,7 @@ function(input, output, session) {
       
       Map(function(i) {
         print(num_tabs)
-        observeEvent(input[[paste0('circos',i)]],{
+        observeEvent(input[[paste0('circos_',input$gene,'_',input$db,'_',i)]],{
           smartModal(error=F, title = "Calculating", content = "Generating Circos Plot ...")
           g.circos <<- g[[i]]
           print(paste0('circos',i))
@@ -268,6 +292,13 @@ function(input, output, session) {
   
   observeEvent(input$action3,{
     smartModal(error=F, title = "Updating", content = "Updating TCGA Expression ...")
+    current.gene <<- input$gene
+    current.db <<- input$db
+    current.cancer <<- input$TCGA_cancer
+    output$TCGA_Expression_gene_db_cancer_name <- renderUI({
+      h2(sprintf("Gene: %s; Database: %s; Cancer: %s.", current.gene, current.db, current.cancer),
+         style="color: grey; font-size: 18px; font-family: Courier")
+    })
     expr_analysis(g[[active_net]], input$TCGA_cancer)
     output$normal_heatmap <- renderPlot({
       order = heatmap(Cn)$rowInd
@@ -276,7 +307,7 @@ function(input, output, session) {
       Cn.melt = melt(Cn.reorder)
       ggplot(Cn.melt, aes(Var1, Var2, value))+
         geom_tile(aes(fill = value), color = "white") +
-        scale_fill_gradient2(low = "red", mid = "orange", high = "white") +
+        scale_fill_gradient2(low = "blue", mid = "white", high = "yellow") +
         ylab("") +
         xlab("") +
         theme(legend.title = element_text(size = 12),
@@ -294,7 +325,7 @@ function(input, output, session) {
       Ct.melt = melt(Ct.reorder)
       ggplot(Ct.melt, aes(Var1, Var2, value))+
         geom_tile(aes(fill = value), color = "white") +
-        scale_fill_gradient2(low = "red", mid = "orange", high = "white") +
+        scale_fill_gradient2(low = "blue", mid = "white", high = "yellow") +
         ylab("") +
         xlab("") +
         theme(legend.title = element_text(size = 12),

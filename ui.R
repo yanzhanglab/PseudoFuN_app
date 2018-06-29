@@ -100,6 +100,7 @@ navbarPage(
              ),
              mainPanel(
                h2("Please be patient plots may take a few seconds to render.", style="color: STEELBLUE; font-size: 14px"),
+               uiOutput("Circos_plot_gene_db_name"),
                h2("hg38:", style="color: STEELBLUE; font-size: 22px"),
                plotOutput("circos_plot_component_hg38", width = 800, height = 600),
                h2("hg19:", style="color: STEELBLUE; font-size: 22px"),
@@ -113,7 +114,7 @@ navbarPage(
              sidebarPanel(
                width = 3,
                h4("TCGA Cancer Selection", style="color: STEELBLUE"),
-               helpText("Please select which cancer to conduct gene expression analysis for the selected network.
+               helpText("Please select the cancer to conduct gene expression analysis on the selected network.
                         If no search has been conducted, please conduct a search using the Search Engine tab.
                         To conduct the TCGA expression analysis on the search results, the TCGA Expression
                         button must be selected in your network of interest."),
@@ -126,6 +127,7 @@ navbarPage(
              ),
              mainPanel(
                h2("TCGA Expression Panel", style="color: STEELBLUE; font-size: 22px"),
+               uiOutput("TCGA_Expression_gene_db_cancer_name"),
                h2("Please be patient plots may take a few seconds to render.", style="color: STEELBLUE; font-size: 14px"),
                fluidRow(
                  column(6, h4("Normal Sample Coexpression", style="color: STEELBLUE")),

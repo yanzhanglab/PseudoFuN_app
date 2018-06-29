@@ -21,3 +21,7 @@ Etcga <- NULL # to be download
 miR_gene_cor <- NULL # to be download
 tester1 <<- NULL
 tester2 <<- NULL
+
+current.gene <<- NULL
+current.db <<- NULL
+current.cancer <<- NULL
