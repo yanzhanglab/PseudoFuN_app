@@ -285,14 +285,14 @@ expr_analysis <-function(g, tcga_cancer_type, session){
   }
   if(!is.null(Etcga)){
     Ctumor = as.numeric(substr(cnames,14,16))<10;
-    if(sum(Ctumor)>0){
+    if(sum(Ctumor)>1){
       Et = Etcga[,Ctumor]
       Ct <- cor(log2(t(Et)+1))
       Ct[is.na(Ct)] <- 0;
     }else{
       Ct <- NULL
     }
-    if(sum(!Ctumor)>0){
+    if(sum(!Ctumor)>1){
       En = Etcga[,!Ctumor]
       Cn <- cor(log2(t(En)+1))
       Cn[is.na(Cn)] <- 0;
@@ -304,7 +304,7 @@ expr_analysis <-function(g, tcga_cancer_type, session){
     Disease = ifelse(as.numeric(substr(E.df$Var2,14,16))<10,"tumor","normal")
     genes = unique(E.df$Var1)
     
-    if (length(unique(Disease)) > 1){
+    if (length(unique(Disease)) > 1 & sum(!Ctumor)>1 & sum(Ctumor)>1){
       for(gene in genes){
         tmp = t.test(E.df[E.df$Var1==gene,"value"]~Disease[E.df$Var1==gene])
         E.df[E.df$Var1==gene,"Var1"] = paste0(gene,"\n(pval=",formatC(tmp$p.value, format = "e", digits = 2),")")
