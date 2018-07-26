@@ -119,7 +119,7 @@ navbarPage(
                         To conduct the TCGA expression analysis on the search results, the TCGA Expression
                         button must be selected in your network of interest."),
                selectInput(inputId = "TCGA_cancer", label = "TCGA Cancers",
-                           choices = list("ACC","BLCA","BRCA","CESC","CHOL","COAD","DLBC","ESCA","GBM","HNSC","KICH","KIRC","KIRP","LGG","LIHC","LUAD","LUSC","MESO","OV","PCPG","PRAD","READ","SARC","SKCM","STAD","TGCT","THCA","THYM","UCEC","UCS","UVM"),
+                           choices = list("ACC","BLCA","BRCA","CESC","CHOL","COAD","DLBC","ESCA","GBM","HNSC","KICH","KIRC","KIRP","LGG","LIHC","LUAD","LUSC","MESO","OV","PAAD","PCPG","PRAD","READ","SARC","SKCM","STAD","TGCT","THCA","THYM","UCEC","UCS","UVM"),
                            selected = "BRCA", multiple = FALSE),
                actionButton("action3", "Confirm", style="color: WHITE; background-color: DODGERBLUE")
                
