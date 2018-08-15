@@ -28,6 +28,8 @@ library('org.Hs.eg.db')
 library(reshape2)
 library(ggplot2)
 library(ggrepel)
+library(parallel)
+library(lme4)
 
 
 letters_only <- function(x) !grepl("[^A-Za-z]", x)
@@ -147,7 +149,7 @@ in_pgAmat <- function(pgAmat,gene){
 }
 
 find_pgAmats <- function(genes,dataset){
-  message('Finding pgAmats containing gene')
+  #message('Finding pgAmats containing gene')
   tmp = list()
   if(all(is.na(genes)==TRUE)){
     return(NA)
@@ -243,17 +245,17 @@ expr_analysis <-function(g, tcga_cancer_type, session){
   #tester1 <<- exprG
   #tester2 <<- exprP
   miR_cor = readRDS(paste0("data/miR-gene_rds/",tcga_cancer_type,"-TP.rds"))
-  
   nodes <- g$nodes$name
   node.mat <- matrix(unlist(strsplit(as.character(nodes),': ')),ncol=3,byrow=TRUE)
   Eg = exprG[unique(node.mat[node.mat[,1]=="Gene",2],na.rm=TRUE),]
   grnames = row.names(Eg)[sub("[.].*","",row.names(Eg))!="NA"]
   #tester1 <<- grnames
-  if(length(grnames)>0)
+  if(length(grnames)>0){
     Eg = Eg[grnames,]
-  Eg = apply(Eg,2,as.numeric)
-  if(length(grnames)<2){Eg = t(as.matrix(Eg))}
-  row.names(Eg) = grnames
+    Eg = apply(Eg,2,as.numeric)
+    if(length(grnames)<2){Eg = t(as.matrix(Eg))}
+    row.names(Eg) = grnames
+  }
   #Eg = (Eg/colSums(Eg))*1e2
   Ep = exprP[unique(node.mat[node.mat[,1]=="Pseudogene",2],na.rm=TRUE),]
   prnames = row.names(Ep)[sub("[.].*","",row.names(Ep))!="NA"]
@@ -285,14 +287,14 @@ expr_analysis <-function(g, tcga_cancer_type, session){
   }
   if(!is.null(Etcga)){
     Ctumor = as.numeric(substr(cnames,14,16))<10;
-    if(sum(Ctumor)>1){
+    if(sum(Ctumor)>1 && dim(Etcga)[1]>1){
       Et = Etcga[,Ctumor]
       Ct <- cor(log2(t(Et)+1))
       Ct[is.na(Ct)] <- 0;
     }else{
       Ct <- NULL
     }
-    if(sum(!Ctumor)>1){
+    if(sum(!Ctumor)>1 && dim(Etcga)[1]>1){
       En = Etcga[,!Ctumor]
       Cn <- cor(log2(t(En)+1))
       Cn[is.na(Cn)] <- 0;
@@ -304,7 +306,7 @@ expr_analysis <-function(g, tcga_cancer_type, session){
     Disease = ifelse(as.numeric(substr(E.df$Var2,14,16))<10,"tumor","normal")
     genes = unique(E.df$Var1)
     
-    if (length(unique(Disease)) > 1 & sum(!Ctumor)>1 & sum(Ctumor)>1){
+    if (length(unique(Disease)) > 1 && sum(!Ctumor)>1 && sum(Ctumor)>1){
       for(gene in genes){
         tmp = t.test(E.df[E.df$Var1==gene,"value"]~Disease[E.df$Var1==gene])
         E.df[E.df$Var1==gene,"Var1"] = paste0(gene,"\n(pval=",formatC(tmp$p.value, format = "e", digits = 2),")")
@@ -342,8 +344,9 @@ expr_analysis <-function(g, tcga_cancer_type, session){
   }
   
   removeModal()
-  
-  if (length(unique(Disease)) == 1){
+  message(length(unique(Disease))) # *********testing***********
+  if (length(unique(Disease)) == 0){
+    message("only one disease type?")
     sendSweetAlert(session, title = "Warning", "There's only one group (tumor) in current TCGA dataset. Normal heatmap may not show up.", type = "warning",
                    btn_labels = "Ok", html = FALSE, closeOnClickOutside = TRUE)
     Cn <<- NULL
@@ -352,14 +355,45 @@ expr_analysis <-function(g, tcga_cancer_type, session){
     fig_miR_scatter <<- fig_miR_scatter
     Etcga <<- Etcga
     miR_gene_cor <<- miR_gene_cor
-  }
-  else{
+  }else if(FALSE){
+    # *********testing***********
+  }else{
     Cn <<- Cn
     Ct <<- Ct
     fig_expr_box <<- fig_expr_box
     fig_miR_scatter <<- fig_miR_scatter
     Etcga <<- Etcga
     miR_gene_cor <<- miR_gene_cor
+  }
+}
+
+generateDGEtbl <- function(DGE_FDR_cutoff){
+  exprP = readRDS(paste0("data/dreamBase_rds_pseudo/TCGA_",current.cancer,".rds"))
+  cnames = colnames(exprP)
+  Disease = ifelse(as.numeric(substr(cnames,14,16))<10,"tumor","normal")
+  if((sum(Disease=="tumor")>10) & (sum(Disease=="normal")>10)){
+  aov_stats = t(apply(exprP,1,function(x) unlist(summary(aov(as.numeric(x)~as.factor(Disease)))[[1]][1,4:5])))
+  Gene.symbols = row.names(exprP)
+  DGE.table = data.frame(Gene.symbols);
+  DGE.table$F.values = aov_stats[,1];
+  DGE.table$p.values = aov_stats[,2];
+  DGE.table = DGE.table[order(DGE.table$p.values),]
+  DGE.table$fdr = p.adjust(DGE.table$p.values,method='BH',n=dim(DGE.table)[1])
+  DGE.table = DGE.table[order(DGE.table$fdr),]
+  DGE.table = DGE.table[DGE.table$fdr<DGE_FDR_cutoff,]
+  dim(DGE.table)
+  system.time(Ensembl.ids <- mclapply(DGE.table$Gene.symbols,function(x) annot[annot$hgnc_symbol==x,'ensembl_transcript_id']))
+  system.time(PGG.families <- mclapply(Ensembl.ids,function(x) find_pgAmats(x,dataset)))
+  Ensembl.ids = mclapply(Ensembl.ids, function(x) if(identical(x, character(0))) NA else x)
+  PGG.families = mclapply(PGG.families, function(x) if(identical(x, character(0))) NA else x)
+  Ensembl.ids = mclapply(Ensembl.ids, function(x) paste(x,collapse=","))
+  PGG.families = mclapply(PGG.families, function(x) paste(x,collapse=","))
+  DGE.table$Ensembl.ids = Ensembl.ids;
+  DGE.table$PGG.families = PGG.families;
+  DGE.table = DGE.table[,c('Gene.symbols','Ensembl.ids','PGG.families','F.values','p.values','fdr')]
+  return(DGE.table)
+  }else{
+  return(NULL)
   }
 }
 
