@@ -367,12 +367,15 @@ expr_analysis <-function(g, tcga_cancer_type, session){
   }
 }
 
-generateDGEtbl <- function(DGE_FDR_cutoff){
+generateDGEtbl <- function(current.cancer){
+  #print(sprintf("Generating DGE table with cutoff %f", DGE_FDR_cutoff))
   exprP = readRDS(paste0("data/dreamBase_rds_pseudo/TCGA_",current.cancer,".rds"))
+  message('loaded pseudogene expr')
   cnames = colnames(exprP)
   Disease = ifelse(as.numeric(substr(cnames,14,16))<10,"tumor","normal")
   if((sum(Disease=="tumor")>10) & (sum(Disease=="normal")>10)){
-  aov_stats = t(apply(exprP,1,function(x) unlist(summary(aov(as.numeric(x)~as.factor(Disease)))[[1]][1,4:5])))
+  aov_stats = mclapply(t(exprP),function(x) unlist(summary(aov(as.numeric(x)~as.factor(Disease)))[[1]][1,4:5]))
+  message('calculated stats')
   Gene.symbols = row.names(exprP)
   DGE.table = data.frame(Gene.symbols);
   DGE.table$F.values = aov_stats[,1];
@@ -380,17 +383,20 @@ generateDGEtbl <- function(DGE_FDR_cutoff){
   DGE.table = DGE.table[order(DGE.table$p.values),]
   DGE.table$fdr = p.adjust(DGE.table$p.values,method='BH',n=dim(DGE.table)[1])
   DGE.table = DGE.table[order(DGE.table$fdr),]
-  DGE.table = DGE.table[DGE.table$fdr<DGE_FDR_cutoff,]
+  message('sorted table')
+  #DGE.table = DGE.table[DGE.table$fdr<DGE_FDR_cutoff,]
   dim(DGE.table)
   system.time(Ensembl.ids <- mclapply(DGE.table$Gene.symbols,function(x) annot[annot$hgnc_symbol==x,'ensembl_transcript_id']))
-  system.time(PGG.families <- mclapply(Ensembl.ids,function(x) find_pgAmats(x,dataset)))
+  message('retrieved ensembl ids')
+  # system.time(PGG.families <- mclapply(Ensembl.ids,function(x) find_pgAmats(x,dataset)))
   Ensembl.ids = mclapply(Ensembl.ids, function(x) if(identical(x, character(0))) NA else x)
-  PGG.families = mclapply(PGG.families, function(x) if(identical(x, character(0))) NA else x)
+  #PGG.families = mclapply(PGG.families, function(x) if(identical(x, character(0))) NA else x)
   Ensembl.ids = mclapply(Ensembl.ids, function(x) paste(x,collapse=","))
-  PGG.families = mclapply(PGG.families, function(x) paste(x,collapse=","))
+  #PGG.families = mclapply(PGG.families, function(x) paste(x,collapse=","))
   DGE.table$Ensembl.ids = Ensembl.ids;
-  DGE.table$PGG.families = PGG.families;
-  DGE.table = DGE.table[,c('Gene.symbols','Ensembl.ids','PGG.families','F.values','p.values','fdr')]
+  #DGE.table$PGG.families = PGG.families;
+  #DGE.table = DGE.table[,c('Gene.symbols','Ensembl.ids','PGG.families','F.values','p.values','fdr')]
+  DGE.table = DGE.table[,c('Gene.symbols','Ensembl.ids','F.values','p.values','fdr')]
   return(DGE.table)
   }else{
   return(NULL)

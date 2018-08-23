@@ -221,6 +221,7 @@ function(input, output, session) {
           })
           output$pseudo_boxplot <- renderPlot({fig_expr_box})
           output$correlation_plot <- renderPlot({fig_miR_scatter})
+          output$correlation_plot <- renderPlot({fig_miR_scatter})
           session$sendCustomMessage("myCallbackHandler", "tab_TCGA_Expression")
         })
       },
@@ -359,7 +360,7 @@ function(input, output, session) {
         labs(fill = "Expression level")
     })
     output$pseudo_boxplot <- renderPlot({fig_expr_box})
-    output$correlation_plot <- renderPlot({fig_miR_scatter})
+    output$DGEtable <- DT::renderDataTable({generateDGEtbl(input$DGE_cutoff_value, input$TCGA_cancer)})
   })
   
   

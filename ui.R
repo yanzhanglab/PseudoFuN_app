@@ -121,8 +121,9 @@ navbarPage(
                selectInput(inputId = "TCGA_cancer", label = "TCGA Cancers",
                            choices = list("ACC","BLCA","BRCA","CESC","CHOL","COAD","DLBC","ESCA","GBM","HNSC","KICH","KIRC","KIRP","LGG","LIHC","LUAD","LUSC","MESO","OV","PAAD","PCPG","PRAD","READ","SARC","SKCM","STAD","TGCT","THCA","THYM","UCEC","UCS","UVM"),
                            selected = "BRCA", multiple = FALSE),
+               sliderInput(inputId = "DGE_cutoff_value", label = "Run DGE on all Pseudo (DGE FDR cutoff: 1e-value)",
+                           min = 10,max = 200, value = 15,step = 1),
                actionButton("action3", "Confirm", style="color: WHITE; background-color: DODGERBLUE")
-               
                
              ),
              mainPanel(
@@ -139,14 +140,10 @@ navbarPage(
                ),
                h4("Differential Expression Tumor vs. Normal", style="color: STEELBLUE"),
                plotOutput("pseudo_boxplot", width = 1200, height = 500),
-               fluidRow(
-                 column(7, h4("Gene and Pseudogene miRNA Associations", style="color: STEELBLUE"))
-                 #column(5, h4("Download Data", style="color: STEELBLUE"))
-               ),
-               fluidRow(
-                 column(7, plotOutput("correlation_plot", width = 600, height = 600))
-                 #column(5, downloadButton('download_TCGA_exp', 'Download'))
-               ),
+               h4("Gene and Pseudogene miRNA Associations", style="color: STEELBLUE"),
+               plotOutput("correlation_plot", width = 600, height = 600),
+               h4("DGE Table", style="color: STEELBLUE"),
+               DT::dataTableOutput("DGEtable"),
                fluidRow(
                 column(5, downloadButton('download_TCGA_exp', 'Download Data'))
                )
