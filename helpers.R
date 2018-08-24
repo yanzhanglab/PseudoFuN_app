@@ -374,32 +374,32 @@ generateDGEtbl <- function(current.cancer){
   cnames = colnames(exprP)
   Disease = ifelse(as.numeric(substr(cnames,14,16))<10,"tumor","normal")
   if((sum(Disease=="tumor")>10) & (sum(Disease=="normal")>10)){
-  aov_stats = mclapply(t(exprP),function(x) unlist(summary(aov(as.numeric(x)~as.factor(Disease)))[[1]][1,4:5]))
-  message('calculated stats')
-  Gene.symbols = row.names(exprP)
-  DGE.table = data.frame(Gene.symbols);
-  DGE.table$F.values = aov_stats[,1];
-  DGE.table$p.values = aov_stats[,2];
-  DGE.table = DGE.table[order(DGE.table$p.values),]
-  DGE.table$fdr = p.adjust(DGE.table$p.values,method='BH',n=dim(DGE.table)[1])
-  DGE.table = DGE.table[order(DGE.table$fdr),]
-  message('sorted table')
-  #DGE.table = DGE.table[DGE.table$fdr<DGE_FDR_cutoff,]
-  dim(DGE.table)
-  system.time(Ensembl.ids <- mclapply(DGE.table$Gene.symbols,function(x) annot[annot$hgnc_symbol==x,'ensembl_transcript_id']))
-  message('retrieved ensembl ids')
-  # system.time(PGG.families <- mclapply(Ensembl.ids,function(x) find_pgAmats(x,dataset)))
-  Ensembl.ids = mclapply(Ensembl.ids, function(x) if(identical(x, character(0))) NA else x)
-  #PGG.families = mclapply(PGG.families, function(x) if(identical(x, character(0))) NA else x)
-  Ensembl.ids = mclapply(Ensembl.ids, function(x) paste(x,collapse=","))
-  #PGG.families = mclapply(PGG.families, function(x) paste(x,collapse=","))
-  DGE.table$Ensembl.ids = Ensembl.ids;
-  #DGE.table$PGG.families = PGG.families;
-  #DGE.table = DGE.table[,c('Gene.symbols','Ensembl.ids','PGG.families','F.values','p.values','fdr')]
-  DGE.table = DGE.table[,c('Gene.symbols','Ensembl.ids','F.values','p.values','fdr')]
-  return(DGE.table)
+    aov_stats = mclapply(t(exprP),function(x) unlist(summary(aov(as.numeric(x)~as.factor(Disease)))[[1]][1,4:5]))
+    message('calculated stats')
+    Gene.symbols = row.names(exprP)
+    DGE.table = data.frame(Gene.symbols);
+    DGE.table$F.values = aov_stats[,1];
+    DGE.table$p.values = aov_stats[,2];
+    DGE.table = DGE.table[order(DGE.table$p.values),]
+    DGE.table$fdr = p.adjust(DGE.table$p.values,method='BH',n=dim(DGE.table)[1])
+    DGE.table = DGE.table[order(DGE.table$fdr),]
+    message('sorted table')
+    #DGE.table = DGE.table[DGE.table$fdr<DGE_FDR_cutoff,]
+    dim(DGE.table)
+    system.time(Ensembl.ids <- mclapply(DGE.table$Gene.symbols,function(x) annot[annot$hgnc_symbol==x,'ensembl_transcript_id']))
+    message('retrieved ensembl ids')
+    # system.time(PGG.families <- mclapply(Ensembl.ids,function(x) find_pgAmats(x,dataset)))
+    Ensembl.ids = mclapply(Ensembl.ids, function(x) if(identical(x, character(0))) NA else x)
+    #PGG.families = mclapply(PGG.families, function(x) if(identical(x, character(0))) NA else x)
+    Ensembl.ids = mclapply(Ensembl.ids, function(x) paste(x,collapse=","))
+    #PGG.families = mclapply(PGG.families, function(x) paste(x,collapse=","))
+    DGE.table$Ensembl.ids = Ensembl.ids;
+    #DGE.table$PGG.families = PGG.families;
+    #DGE.table = DGE.table[,c('Gene.symbols','Ensembl.ids','PGG.families','F.values','p.values','fdr')]
+    DGE.table = DGE.table[,c('Gene.symbols','Ensembl.ids','F.values','p.values','fdr')]
+    return(DGE.table)
   }else{
-  return(NULL)
+    return(NULL)
   }
 }
 
