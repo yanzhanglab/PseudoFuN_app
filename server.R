@@ -28,7 +28,7 @@ function(input, output, session) {
   
   observeEvent(input$action1, {
     dataset <<- load_dataset(input$db)
-    current.gene <<- input$gene
+    current.gene <<- toupper(input$gene)
     current.db <<- input$db
     output$Circos_plot_gene_db_name <- renderUI({
       h2(sprintf("Gene: %s; Database: %s.", current.gene, current.db),
@@ -224,7 +224,7 @@ function(input, output, session) {
           output$correlation_plot <- renderPlot({fig_miR_scatter})
           
           #DGE table
-          dgetable <- readRDS(sprintf("./Pseudogene_rds_DGE/TCGA_%s_%s.rds", "BRCA", current.db))
+          dgetable <- readRDS(sprintf("./data/Pseudogene_rds_DGE/TCGA_%s_%s.rds", "BRCA", current.db))
           dgetable.cutoff <<- dgetable[dgetable$FDR < 10^(-input$DGE_cutoff_value),]
           dgetable.cutoff <<- data.frame(apply(dgetable.cutoff, 2, function(x) unlist(x)))
           output$DGEtable <- DT::renderDataTable({dgetable.cutoff}, selection="none", escape = F,
