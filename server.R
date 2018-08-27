@@ -369,7 +369,7 @@ function(input, output, session) {
     })
     output$pseudo_boxplot <- renderPlot({fig_expr_box})
     #DGE table
-    dgetable <- readRDS(sprintf("./Pseudogene_rds_DGE/TCGA_%s_%s.rds", "BRCA", current.db))
+    dgetable <- readRDS(sprintf("./data/Pseudogene_rds_DGE/TCGA_%s_%s.rds", "BRCA", current.db))
     dgetable.cutoff <- dgetable[dgetable$FDR < 10^(-input$DGE_cutoff_value),]
     dgetable.cutoff <<- data.frame(apply(dgetable.cutoff, 2, function(x) unlist(x)))
     output$DGEtable <- DT::renderDataTable({dgetable.cutoff}, selection="none", escape = F,

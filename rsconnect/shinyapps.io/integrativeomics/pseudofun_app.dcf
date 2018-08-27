@@ -5,6 +5,6 @@ account: integrativeomics
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 359710
-bundleId: 1552466
+bundleId: 1556506
 url: https://integrativeomics.shinyapps.io/pseudofun_app/
-when: 1535127010.77343
+when: 1535394621.84616

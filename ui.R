@@ -117,11 +117,16 @@ navbarPage(
                helpText("Please select the cancer to conduct gene expression analysis on the selected network.
                         If no search has been conducted, please conduct a search using the Search Engine tab.
                         To conduct the TCGA expression analysis on the search results, the TCGA Expression
-                        button must be selected in your network of interest."),
+                        button must be selected under the  Search Engine tab."),
                selectInput(inputId = "TCGA_cancer", label = "TCGA Cancers",
                            choices = list("ACC","BLCA","BRCA","CESC","CHOL","COAD","DLBC","ESCA","GBM","HNSC","KICH","KIRC","KIRP","LGG","LIHC","LUAD","LUSC","MESO","OV","PAAD","PCPG","PRAD","READ","SARC","SKCM","STAD","TGCT","THCA","THYM","UCEC","UCS","UVM"),
                            selected = "BRCA", multiple = FALSE),
-               sliderInput(inputId = "DGE_cutoff_value", label = "Run DGE on all Pseudo (DGE FDR cutoff: 1e-value)",
+               h4("Differential Pseudogene Expression (DPgE)", style="color: STEELBLUE"),
+               helpText("The DPgE table is pregenerated using a linear model and the FDR is calculated for each
+                        pseudogene. In this case (since there are only tumor and normal groups), the F value is
+                        equivalent to the T statistic in the form (F = T^2). Below a cutoff FDR value can be selected for 
+                        the displayed DPgE table."),
+               sliderInput(inputId = "DGE_cutoff_value", label = "FDR cutoff: 1e-value",
                            min = 10,max = 200, value = 15,step = 1),
                actionButton("action3", "Confirm", style="color: WHITE; background-color: DODGERBLUE")
                
@@ -142,7 +147,7 @@ navbarPage(
                plotOutput("pseudo_boxplot", width = 1200, height = 500),
                h4("Gene and Pseudogene miRNA Associations", style="color: STEELBLUE"),
                plotOutput("correlation_plot", width = 600, height = 600),
-               h4("DGE Table", style="color: STEELBLUE"),
+               h4("DPgE Table", style="color: STEELBLUE"),
                DT::dataTableOutput("DGEtable"),
                fluidRow(
                 column(5, downloadButton('download_TCGA_exp', 'Download Data'))
