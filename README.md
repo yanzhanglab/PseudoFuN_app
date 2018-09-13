@@ -10,7 +10,7 @@ A second query tool which allows for direct sequence queries is also available t
 The online Shiny app is still under improvement. The app has been tested on OSX El Captitan 10.11.6 and R version 3.4.2. 
 The website version has been tested in Chrome, Firefox, and Safari.
 
-Citation: Johnson TS, Li S, Franz E, Huang Z, Campbell MJ, Huang K, Zhang Y. PseudoFuN: a resource to derive functional potentials in pseudogenes.
+Travis Johnson, Sihong Li, Eric Franz, Zhi Huang, Shuyu Dan Li, Moray J Campbell, Kun Huang, Yan Zhang. PseudoFuN: a resource to derive functional potentials in pseudogenes. Submitted.
 
 ## What does PseudoFuN do?
 Pseudogene-gene families are sets of homologous genes and pseudogenes

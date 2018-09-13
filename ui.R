@@ -123,7 +123,7 @@ navbarPage(
                            selected = "BRCA", multiple = FALSE),
                h4("Differential Pseudogene Expression (DPgE)", style="color: STEELBLUE"),
                helpText("The DPgE table is pregenerated using a linear model and the FDR is calculated for each
-                        pseudogene. In this case (since there are only tumor and normal groups), the F value is
+                        pseudogene in the TCGA cancer chosen above. In this case (since there are only tumor and normal groups), the F value is
                         equivalent to the T statistic in the form (F = T^2). Below a cutoff FDR value can be selected for 
                         the displayed DPgE table."),
                sliderInput(inputId = "DGE_cutoff_value", label = "FDR cutoff: 1e-value",
