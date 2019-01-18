@@ -62,10 +62,12 @@ load_dataset <- function(dataset){
 # get_annot <- function(){
 #   message('Retrieving GENCODE annotation')
 #   listMarts(host='dec2016.archive.ensembl.org')
-#   ensembl74 <- useMart(host='dec2016.archive.ensembl.org', 
-#                        biomart='ENSEMBL_MART_ENSEMBL', 
+#   ensembl74 <- useMart(host='dec2016.archive.ensembl.org',
+#                        biomart='ENSEMBL_MART_ENSEMBL',
 #                        dataset='hsapiens_gene_ensembl')
-#   annot <- getBM(attributes=c('ensembl_transcript_id', 'ensembl_gene_id', 'entrezgene', 'hgnc_symbol', 'start_position', 'end_position', 'band','gene_biotype'),
+#   annot <- getBM(attributes=c('ensembl_transcript_id', 'ensembl_gene_id',
+#                               'entrezgene', 'hgnc_symbol', 'start_position',
+#                               'end_position', 'band','gene_biotype'),
 #                  mart=ensembl74)
 #   return(annot)
 # }
@@ -203,6 +205,9 @@ int_graph <- function(pgAmat){
   wc <- cluster_walktrap(mstg)
   members <- membership(wc)
   nd3g = igraph_to_networkD3(mstg,group=members)
+  if (dim(nd3g$links)[1] == 0){
+    nd3g$links = data.frame(source=c(0),target=c(0),value=c(0))
+  }
   return(nd3g)
   # plotted D3 graph now returns D3 graph
   #forceNetwork(Links = nd3g$links, Nodes=nd3g$nodes,
@@ -237,14 +242,18 @@ num_networks <- function(gene,dataset,annot){
   return(length(pgAmats))
 }
 
-expr_analysis <-function(g, tcga_cancer_type, session){
+expr_analysis <-function(g, tcga_cancer_type, session, miRNAev){
   exprG = readRDS(paste0("data/TCGA_rds_gene/",tcga_cancer_type,".rds"))
   exprP = readRDS(paste0("data/dreamBase_rds_pseudo/TCGA_",tcga_cancer_type,".rds"))
   #message(dim(exprG))
   #message(dim(exprP))
   #tester1 <<- exprG
   #tester2 <<- exprP
+  print(miRNAev)
+  
+  miRNAev = as.numeric(miRNAev)
   miR_cor = readRDS(paste0("data/miR-gene_rds/",tcga_cancer_type,"-TP.rds"))
+  miR_cor = miR_cor[miR_cor$Total>=miRNAev,]
   nodes <- g$nodes$name
   node.mat <- matrix(unlist(strsplit(as.character(nodes),': ')),ncol=3,byrow=TRUE)
   Eg = exprG[unique(node.mat[node.mat[,1]=="Gene",2],na.rm=TRUE),]

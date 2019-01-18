@@ -12,7 +12,7 @@ library(reshape2)
 function(input, output, session) {
   num_tabs <<- NULL
   g <<- NULL
-  adjmat <<- NULL
+  adjmat <<- list()
   g.circos <<- NULL
   tabs.list <<- NULL
   active_net <<- NULL # the current active network, integer value.
@@ -87,6 +87,7 @@ function(input, output, session) {
                   tab = tabPanel(paste0('Network ',i),
                                  h2(paste0('Network ',i),
                                  style="color: STEELBLUE; font-size: 22px"),
+                                 h2("Please enable pop-ups from this website to view gene/pseudogene link out resources.",style="color: STEELBLUE; font-size: 14px"),
                                  forceNetworkOutput(paste0('net',i)),
                                  actionButton(paste0('circos_',current.gene,'_',current.db,'_',i),
                                               "Circos Plot", style="color: WHITE; background-color: #FFC300"),
@@ -132,6 +133,7 @@ function(input, output, session) {
           var genename = split[2].substr(0,15);
           if (genename.length > 0){
           window.open("https://www.genecards.org/Search/Keyword?queryString="+genename, "_blank");
+          window.open("https://useast.ensembl.org/Homo_sapiens/Gene/TranscriptComparison?db=core;g="+genename, "_blank");
           }
           else{
           alert(d.name + " doesn\'t contain any gene symbol!");
@@ -163,6 +165,7 @@ function(input, output, session) {
       Map(function(i) {
         observeEvent(input[[paste0('TCGA_expression_',current.gene,'_',current.db,'_',i)]],{
           active_net <<- i
+          message(sprintf("active net: %d", active_net))
           current.cancer <<- input$TCGA_cancer
           output$TCGA_Expression_gene_db_cancer_name <- renderUI({
             h2(sprintf("Gene: %s; Database: %s; Cancer: %s; Network: %d.", current.gene, current.db, current.cancer, active_net),
@@ -170,24 +173,63 @@ function(input, output, session) {
           })
           smartModal(error=F, title = "Calculating", content = "Calculating TCGA Expression ...")
           print(sprintf("Gene: %s; Database: %s; Cancer: %s.", current.gene, current.db, current.cancer))
-          expr_analysis(g[[i]], input$TCGA_cancer, session)
-          if (is.null(Cn)){
+          expr_analysis(g[[i]], input$TCGA_cancer, session, input$miRNA_pred_targ)
+          if (dim(Etcga)[1]==1){
             output$normal_heatmap = NULL
             output$normal_heatmap <- renderPlot({
               par(mar = c(0,0,0,0))
               plot(c(0, 1), c(0, 1), ann = F, bty = 'n', type = 'n', xaxt = 'n', yaxt = 'n')
-              text(x = 0.5, y = 0.5, paste("All disease type are tumor.\n",
-                                           "No normal sample available."), 
+              text(x = 0.5, y = 0.5, paste("Correlation matrix cannot be calculated.\n",
+                                           "Only 1 gene/pseudogene expression was found."), 
                    cex = 1.6, col = "black")
             })
-          }
-          else{
-            output$normal_heatmap <- renderPlot({
-              order = heatmap(Cn)$rowInd
-              Cn.reorder = Cn[,order]
-              Cn.reorder = Cn.reorder[order,]
-              Cn.melt = melt(Cn.reorder)
-              ggplot(Cn.melt, aes(Var1, Var2, value))+
+            output$tumor_heatmap = NULL
+            output$tumor_heatmap <- renderPlot({
+              par(mar = c(0,0,0,0))
+              plot(c(0, 1), c(0, 1), ann = F, bty = 'n', type = 'n', xaxt = 'n', yaxt = 'n')
+              text(x = 0.5, y = 0.5, paste("Correlation matrix cannot be calculated.\n",
+                                           "Only 1 gene/pseudogene expression was found."), 
+                                          cex = 1.6, col = "black")
+            })
+          }else{
+            if (is.null(Cn)){
+              output$normal_heatmap = NULL
+              output$normal_heatmap <- renderPlot({
+                par(mar = c(0,0,0,0))
+                plot(c(0, 1), c(0, 1), ann = F, bty = 'n', type = 'n', xaxt = 'n', yaxt = 'n')
+                text(x = 0.5, y = 0.5, paste("All disease type are tumor.\n",
+                                             "No normal sample available."), 
+                                              cex = 1.6, col = "black")
+              })
+            }
+            else{
+              output$normal_heatmap <- renderPlot({
+                order = heatmap(Cn)$rowInd
+                Cn.reorder = Cn[,order]
+                Cn.reorder = Cn.reorder[order,]
+                diag(Cn.reorder) = NA
+                Cn.melt = melt(Cn.reorder)
+                ggplot(Cn.melt, aes(Var1, Var2, value))+
+                  geom_tile(aes(fill = value), color = "white") +
+                  scale_fill_gradient2(low = "blue", mid = "white", high = "yellow") +
+                  ylab("") +
+                  xlab("") +
+                  theme(legend.title = element_text(size = 12),
+                        legend.text = element_text(size = 10),
+                        plot.title = element_text(size=16),
+                        axis.title=element_text(size=14,face="bold"),
+                        axis.text.x = element_text(size=12,angle = 45, hjust = 1),
+                        axis.text.y = element_text(size=12)) +
+                  labs(fill = "Expression level")
+              })
+            }
+            output$tumor_heatmap <- renderPlot({
+              order = heatmap(Ct)$rowInd
+              Ct.reorder = Ct[,order]
+              Ct.reorder = Ct.reorder[order,]
+              diag(Ct.reorder) = NA
+              Ct.melt = melt(Ct.reorder)
+              ggplot(Ct.melt, aes(Var1, Var2, value))+
                 geom_tile(aes(fill = value), color = "white") +
                 scale_fill_gradient2(low = "blue", mid = "white", high = "yellow") +
                 ylab("") +
@@ -201,28 +243,8 @@ function(input, output, session) {
                 labs(fill = "Expression level")
             })
           }
-          output$tumor_heatmap <- renderPlot({
-            order = heatmap(Ct)$rowInd
-            Ct.reorder = Ct[,order]
-            Ct.reorder = Ct.reorder[order,]
-            Ct.melt = melt(Ct.reorder)
-            ggplot(Ct.melt, aes(Var1, Var2, value))+
-              geom_tile(aes(fill = value), color = "white") +
-              scale_fill_gradient2(low = "blue", mid = "white", high = "yellow") +
-              ylab("") +
-              xlab("") +
-              theme(legend.title = element_text(size = 12),
-                    legend.text = element_text(size = 10),
-                    plot.title = element_text(size=16),
-                    axis.title=element_text(size=14,face="bold"),
-                    axis.text.x = element_text(size=12,angle = 45, hjust = 1),
-                    axis.text.y = element_text(size=12)) +
-              labs(fill = "Expression level")
-          })
           output$pseudo_boxplot <- renderPlot({fig_expr_box})
           output$correlation_plot <- renderPlot({fig_miR_scatter})
-          output$correlation_plot <- renderPlot({fig_miR_scatter})
-          
           #DGE table
           dgetable <- readRDS(sprintf("./data/Pseudogene_rds_DGE/TCGA_%s_%s.rds", "BRCA", current.db))
           dgetable.cutoff <<- dgetable[dgetable$FDR < 10^(-input$DGE_cutoff_value),]
@@ -318,24 +340,62 @@ function(input, output, session) {
       h2(sprintf("Gene: %s; Database: %s; Cancer: %s; Network: %d.", current.gene, current.db, current.cancer, active_net),
          style="color: grey; font-size: 18px; font-family: Courier")
     })
-    expr_analysis(g[[active_net]], current.cancer, session)
-    if (is.null(Cn)){
+    expr_analysis(g[[active_net]], current.cancer, session, input$miRNA_pred_targ)
+    if (dim(Etcga)[1]==1){
       output$normal_heatmap = NULL
       output$normal_heatmap <- renderPlot({
         par(mar = c(0,0,0,0))
         plot(c(0, 1), c(0, 1), ann = F, bty = 'n', type = 'n', xaxt = 'n', yaxt = 'n')
-        text(x = 0.5, y = 0.5, paste("All disease type are tumor.\n",
-                                     "No normal sample available."), 
+        text(x = 0.5, y = 0.5, paste("Correlation matrix cannot be calculated.\n",
+                                     "Only 1 gene/pseudogene expression was found."), 
              cex = 1.6, col = "black")
       })
-    }
-    else{
-      output$normal_heatmap <- renderPlot({
-        order = heatmap(Cn)$rowInd
-        Cn.reorder = Cn[,order]
-        Cn.reorder = Cn.reorder[order,]
-        Cn.melt = melt(Cn.reorder)
-        ggplot(Cn.melt, aes(Var1, Var2, value))+
+      output$tumor_heatmap = NULL
+      output$tumor_heatmap <- renderPlot({
+        par(mar = c(0,0,0,0))
+        plot(c(0, 1), c(0, 1), ann = F, bty = 'n', type = 'n', xaxt = 'n', yaxt = 'n')
+        text(x = 0.5, y = 0.5, paste("Correlation matrix cannot be calculated.\n",
+                                     "Only 1 gene/pseudogene expression was found."), 
+             cex = 1.6, col = "black")
+      })
+    }else{
+      if (is.null(Cn)){
+        output$normal_heatmap = NULL
+        output$normal_heatmap <- renderPlot({
+          par(mar = c(0,0,0,0))
+          plot(c(0, 1), c(0, 1), ann = F, bty = 'n', type = 'n', xaxt = 'n', yaxt = 'n')
+          text(x = 0.5, y = 0.5, paste("All disease type are tumor.\n",
+                                       "No normal sample available."), 
+               cex = 1.6, col = "black")
+        })
+      }else{
+        output$normal_heatmap <- renderPlot({
+          order = heatmap(Cn)$rowInd
+          Cn.reorder = Cn[,order]
+          Cn.reorder = Cn.reorder[order,]
+          diag(Cn.reorder) = NA
+          Cn.melt = melt(Cn.reorder)
+          ggplot(Cn.melt, aes(Var1, Var2, value))+
+            geom_tile(aes(fill = value), color = "white") +
+            scale_fill_gradient2(low = "blue", mid = "white", high = "yellow") +
+            ylab("") +
+            xlab("") +
+            theme(legend.title = element_text(size = 12),
+                  legend.text = element_text(size = 10),
+                  plot.title = element_text(size=16),
+                  axis.title=element_text(size=14,face="bold"),
+                  axis.text.x = element_text(size=12,angle = 45, hjust = 1),
+                  axis.text.y = element_text(size=12)) +
+            labs(fill = "Expression level")
+        })
+      }
+      output$tumor_heatmap <- renderPlot({
+        order = heatmap(Ct)$rowInd
+        Ct.reorder = Ct[,order]
+        Ct.reorder = Ct.reorder[order,]
+        diag(Ct.reorder) = NA
+        Ct.melt = melt(Ct.reorder)
+        ggplot(Ct.melt, aes(Var1, Var2, value))+
           geom_tile(aes(fill = value), color = "white") +
           scale_fill_gradient2(low = "blue", mid = "white", high = "yellow") +
           ylab("") +
@@ -349,25 +409,8 @@ function(input, output, session) {
           labs(fill = "Expression level")
       })
     }
-    output$tumor_heatmap <- renderPlot({
-      order = heatmap(Ct)$rowInd
-      Ct.reorder = Ct[,order]
-      Ct.reorder = Ct.reorder[order,]
-      Ct.melt = melt(Ct.reorder)
-      ggplot(Ct.melt, aes(Var1, Var2, value))+
-        geom_tile(aes(fill = value), color = "white") +
-        scale_fill_gradient2(low = "blue", mid = "white", high = "yellow") +
-        ylab("") +
-        xlab("") +
-        theme(legend.title = element_text(size = 12),
-              legend.text = element_text(size = 10),
-              plot.title = element_text(size=16),
-              axis.title=element_text(size=14,face="bold"),
-              axis.text.x = element_text(size=12,angle = 45, hjust = 1),
-              axis.text.y = element_text(size=12)) +
-        labs(fill = "Expression level")
-    })
     output$pseudo_boxplot <- renderPlot({fig_expr_box})
+    output$correlation_plot <- renderPlot({fig_miR_scatter})
     #DGE table
     dgetable <- readRDS(sprintf("./data/Pseudogene_rds_DGE/TCGA_%s_%s.rds", "BRCA", current.db))
     dgetable.cutoff <- dgetable[dgetable$FDR < 10^(-input$DGE_cutoff_value),]
