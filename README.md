@@ -12,6 +12,9 @@ The website version has been tested in Chrome, Firefox, and Safari.
 
 Travis Johnson, Sihong Li, Eric Franz, Zhi Huang, Shuyu Dan Li, Moray J Campbell, Kun Huang, Yan Zhang. PseudoFuN: a resource to derive functional potentials in pseudogenes. Submitted.
 
+PseudoFuN DB Search
+https://integrativeomics.shinyapps.io/pseudofun_app/
+
 ## What does PseudoFuN do?
 Pseudogene-gene families are sets of homologous genes and pseudogenes
 based on sequence similarity. This app displays a set of the more than 26000
