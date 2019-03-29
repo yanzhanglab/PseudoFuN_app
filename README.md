@@ -10,7 +10,7 @@ A second query tool which allows for direct sequence queries is also available t
 The online Shiny app is still under improvement. The app has been tested on OSX El Captitan 10.11.6 and R version 3.4.2. 
 The website version has been tested in Chrome, Firefox, and Safari.
 
-Travis Johnson, Sihong Li, Eric Franz, Zhi Huang, Shuyu Dan Li, Moray J Campbell, Kun Huang, Yan Zhang. PseudoFuN: a resource to derive functional potentials in pseudogenes. Submitted.
+Travis Johnson, Sihong Li, Eric Franz, Zhi Huang, Shuyu Dan Li, Moray J Campbell, Kun Huang, Yan Zhang (2019). PseudoFuN: a resource to derive functional potentials in pseudogenes. GigaScience. In press.
 
 PseudoFuN DB Search
 https://integrativeomics.shinyapps.io/pseudofun_app/
